@@ -1,0 +1,22 @@
+Pasi rulare:
+
+Pas 1: (pentru mine)
+cd .\AI_assisted_highlighting_for_learning
+
+Pas 1: Instalare dependente
+
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+py -m pip install -r requirements.txt
+
+Pas 2: accesare mediul virtual (daca nu e activ)
+
+.venv\Scripts\Activate.ps1
+
+Pas 3: 
+
+py app.py
+
+Pas 4: portul local
+
+http://localhost:5000

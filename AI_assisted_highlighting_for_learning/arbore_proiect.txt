@@ -1,0 +1,62 @@
+project/
+│
+├── app.py
+├── requirements.txt
+├── data/
+│   ├── text.json
+│   ├── quiz.json
+│   ├── static_highlights.json
+│   └── interactive_help.json
+│
+├── templates/
+│   ├── index.html
+│   ├── reading.html
+│   ├── quiz.html
+│   └── results.html
+│
+├── static/
+│   ├── style.css
+│   └── script.js
+│
+└── results/
+    └── responses.json
+
+
+
+Ce va face aplicația
+
+Utilizatorul:
+
+introduce sau lipește un text
+alege modul:
+Static
+Interactive AI
+citește textul cu suportul ales
+răspunde la întrebări de comprehension
+vede rezultatul
+
+
+
+
+1. Static highlighting
+
+Sistemul:
+
+extrage propozițiile importante
+le evidențiază direct
+fără explicații suplimentare
+fără interacțiune
+
+Adică suportul este pasiv.
+
+2. Interactive AI-assisted support
+
+Sistemul:
+
+evidențiază ideile importante
+explică de ce o propoziție e relevantă
+poate genera întrebări de ghidare
+poate face rezumat pe paragraf
+poate răspunde la acțiunea utilizatorului
+
+Adică suportul este activ și interactiv.

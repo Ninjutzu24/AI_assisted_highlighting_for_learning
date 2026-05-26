@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "AI-Assisted Highlighting for Learning",
+  "version": "2.0",
+  "description": "Browser extension for static highlighting and interactive reading support on web pages.",
+  "permissions": ["activeTab", "scripting", "tabs","storage"],
+  "host_permissions": [
+    "<all_urls>",
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ]
+}

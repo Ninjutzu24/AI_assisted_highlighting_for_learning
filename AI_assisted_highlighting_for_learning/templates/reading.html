@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Mode</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="page wide-page">
+        <div class="reading-layout">
+            <div class="reader-card">
+                <div class="reader-header">
+                    <div>
+                        <h2>Reading Mode: {{ mode|capitalize }}</h2>
+                        <p class="panel-note">Detected language: {{ language }}</p>
+                    </div>
+                    <a class="secondary-button" href="{{ url_for('index') }}">Back</a>
+                </div>
+
+                {% if mode == "static" %}
+                {% for paragraph in rendered_paragraphs %}
+                <div class="paragraph-block">
+                    <p class="paragraph">{{ paragraph | safe }}</p>
+                </div>
+                {% endfor %}
+                {% else %}
+                {% for paragraph in paragraphs %}
+                <div class="paragraph-block">
+                    <p class="paragraph">{{ paragraph }}</p>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                <p class="panel-note">
+                        When you finish reading, use the extension button “Finish & Take Quiz”.
+
+                </p>
+            </div>
+
+            {% if mode == "interactive" %}
+            <div class="side-panel">
+                <h3>Interactive Support</h3>
+                <p class="panel-note">
+                    The system shows a limited set of AI-style reading aids for the most relevant paragraphs.
+                </p>
+
+                {% for item in interactive_data %}
+                <div class="support-card">
+                    <p><strong>Key idea:</strong> {{ item.key_sentence }}</p>
+                    <p><strong>Explanation:</strong> {{ item.explanation }}</p>
+                    <p><strong>Guiding question:</strong> {{ item.guiding_question }}</p>
+                    <p><strong>Summary:</strong> {{ item.summary }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+
+</html>
