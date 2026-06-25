@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "title": "Webb's Scientific Instruments",
+    "url": "https://science.nasa.gov/mission/webb/science-overview/science-explainers/webbs-scientific-instruments/",
+    "source": "NASA Science",
+    "topic": "Space telescope, scientific instruments, infrared observation"
+  },
+  {
+    "id": 2,
+    "title": "A 'Robot Pizza Chef' Serving Up Better Quantum Computers",
+    "url": "https://newscenter.lbl.gov/2026/02/11/a-robot-pizza-chef-serving-up-better-quantum-computers/",
+    "source": "Berkeley Lab",
+    "topic": "Quantum computers, robotic fabrication, qubits, AI-assisted materials research"
+  },
+  {
+    "id": 3,
+    "title": "Fiber computer allows apparel to run apps and 'understand' the wearer",
+    "url": "https://news.mit.edu/2025/fiber-computer-allows-apparel-to-run-apps-and-understand-wearer-0226",
+    "source": "MIT News",
+    "topic": "Smart clothing, wearable computing, sensors, machine learning, health monitoring"
+  }
+]

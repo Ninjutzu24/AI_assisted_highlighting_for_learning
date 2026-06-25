@@ -1,0 +1,22 @@
+project/
+│
+├── app.py
+├── requirements.txt
+├── data/
+│   ├── text.json
+│   ├── quiz.json
+│   ├── static_highlights.json
+│   └── interactive_help.json
+│
+├── templates/
+│   ├── index.html
+│   ├── reading.html
+│   ├── quiz.html
+│   └── results.html
+│
+├── static/
+│   ├── style.css
+│   └── script.js
+│
+└── results/
+    └── responses.json

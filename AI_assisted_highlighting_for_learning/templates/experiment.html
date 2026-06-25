@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reading Experiment</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #f0f2f5;
+      --surface:     #ffffff;
+      --surface-2:   #f7f8fa;
+      --border:      #d4d8de;
+      --border-dark: #b0b6bf;
+      --ink:         #0f1117;
+      --ink-2:       #3a3f4a;
+      --ink-3:       #6b7280;
+      --blue:        #2563eb;
+      --blue-pale:   #dbeafe;
+      --green:       #16a34a;
+      --green-pale:  #dcfce7;
+      --radius:      6px;
+      --shadow-sm:   0 1px 4px rgba(0,0,0,0.08);
+      --shadow-md:   0 4px 20px rgba(0,0,0,0.10);
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'IBM Plex Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 20px 80px;
+    }
+
+    
+    .page {
+      width: 100%;
+      max-width: 580px;
+      opacity: 0;
+      animation: appear 0.5s ease forwards;
+    }
+
+    
+    .header {
+      margin-bottom: 36px;
+    }
+
+    .header .label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 16px;
+    }
+
+    .header .label::before {
+      content: '';
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--blue);
+      border-radius: 2px;
+    }
+
+    .header h1 {
+      font-family: 'IBM Plex Serif', serif;
+      font-size: clamp(30px, 6vw, 44px);
+      font-weight: 600;
+      line-height: 1.1;
+      color: var(--ink);
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .header h1 span {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--ink-2);
+    }
+
+    .header p {
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--ink-3);
+      line-height: 1.65;
+    }
+
+    
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 28px 0;
+    }
+
+    
+    .input-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 30px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-2);
+      margin-bottom: 8px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-row input {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--ink);
+      font-family: 'IBM Plex Serif', serif;
+      font-size: 20px;
+      font-weight: 400;
+      padding: 11px 16px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-row input::placeholder {
+      color: var(--ink-3);
+      font-style: italic;
+      font-size: 16px;
+    }
+
+    .input-row input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+      background: #fff;
+    }
+
+    .input-row input:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .btn-start {
+      background: var(--blue);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 11px 22px;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-start:hover  { background: #1d4ed8; transform: translateY(-1px); }
+    .btn-start:active { transform: translateY(0); }
+    .btn-start:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    /* ── Session badge ─────────────────────────────────── */
+    .session-badge {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    .session-badge .text {
+      font-size: 13px;
+      color: var(--ink-3);
+    }
+
+    .session-badge .pid {
+      font-family: 'IBM Plex Serif', serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .btn-reset {
+      margin-left: auto;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--ink-3);
+      font-size: 12px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      padding: 4px 11px;
+      cursor: pointer;
+      transition: color 0.18s, border-color 0.18s;
+    }
+    .btn-reset:hover { color: #dc2626; border-color: #dc2626; }
+
+    /* ── Progress ──────────────────────────────────────── */
+    .progress-wrap {
+      display: none;
+      margin-bottom: 20px;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 7px;
+    }
+
+    .progress-meta .label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-2);
+    }
+
+    .progress-meta .count {
+      font-size: 12px;
+      color: var(--ink-3);
+    }
+
+    .progress-track {
+      height: 3px;
+      background: var(--border);
+      border-radius: 99px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue) 0%, var(--green) 100%);
+      border-radius: 99px;
+      transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+      width: 0%;
+    }
+
+    
+    #articles { display: flex; flex-direction: column; }
+
+    .article-card {
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      align-items: center;
+      gap: 18px;
+      padding: 20px 24px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.22s, transform 0.18s, border-color 0.25s;
+      opacity: 0;
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    .article-card:nth-child(1) { animation-delay: 0.05s; }
+    .article-card:nth-child(2) { animation-delay: 0.12s; }
+    .article-card:nth-child(3) { animation-delay: 0.19s; }
+
+    .article-card.unlocked:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      border-color: var(--border-dark);
+    }
+
+    .article-card.locked {
+      opacity: 0.45;
+      background: var(--surface-2);
+      box-shadow: none;
+    }
+
+    .article-card.done {
+      border-color: #bbf7d0;
+      background: linear-gradient(135deg, #fff 60%, #f0fdf4 100%);
+    }
+
+    
+    .num-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'IBM Plex Serif', serif;
+      font-size: 18px;
+      font-weight: 600;
+      flex-shrink: 0;
+      transition: all 0.35s ease;
+    }
+
+    .num-circle.pending {
+      border: 1.5px solid var(--border-dark);
+      color: var(--ink-3);
+      background: var(--surface-2);
+    }
+
+    .num-circle.active {
+      border: 2px solid var(--blue);
+      color: var(--blue);
+      background: var(--blue-pale);
+    }
+
+    .num-circle.done {
+      border: 2px solid var(--green);
+      color: var(--green);
+      background: var(--green-pale);
+      font-size: 16px;
+    }
+
+    .num-circle.locked-c {
+      border: 1.5px dashed var(--border);
+      color: var(--ink-3);
+      background: transparent;
+      font-size: 16px;
+    }
+
+    
+    .connector {
+      width: 1.5px;
+      height: 8px;
+      margin-left: 47px;
+      background: var(--border);
+      transition: background 0.4s;
+    }
+    .connector.done { background: #86efac; }
+
+    
+    .card-meta {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-family: 'IBM Plex Serif', serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--ink);
+      line-height: 1.4;
+      margin-bottom: 5px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-locked .card-title { color: var(--ink-3); }
+
+    .card-status {
+      font-size: 12.5px;
+      color: var(--ink-3);
+      font-weight: 400;
+    }
+    .card-status.active { color: var(--blue);  font-weight: 500; }
+    .card-status.done   { color: var(--green); font-weight: 500; }
+
+    /* ── Action button ─────────────────────────────────── */
+    .btn-action {
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 9px 16px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: none;
+      display: inline-block;
+      flex-shrink: 0;
+      transition: background 0.18s, transform 0.15s;
+    }
+
+    .btn-action.open {
+      background: var(--blue);
+      color: #fff;
+    }
+    .btn-action.open:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+    .btn-action.completed {
+      background: var(--green-pale);
+      color: var(--green);
+      border: 1px solid #86efac;
+      pointer-events: none;
+      cursor: default;
+    }
+
+    .btn-action.locked-btn {
+      background: var(--surface-2);
+      color: var(--ink-3);
+      border: 1px solid var(--border);
+      pointer-events: none;
+      cursor: default;
+    }
+
+    #finish-banner {
+      display: none;
+      margin-top: 20px;
+      background: var(--surface);
+      border: 1.5px solid #bbf7d0;
+      border-radius: var(--radius);
+      padding: 32px 30px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      animation: appear 0.5s ease forwards;
+    }
+
+    #finish-banner .icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    #finish-banner h3 {
+      font-family: 'IBM Plex Serif', serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--green);
+      margin-bottom: 8px;
+    }
+
+    #finish-banner p {
+      font-size: 14px;
+      color: var(--ink-3);
+      line-height: 1.6;
+    }
+
+    
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="label">AI-Assisted highlighting for learning</div>
+    <h1>Reading <span>Experiment</span></h1>
+    <p>Enter your participant ID to receive your assigned<br>reading sequence for today's session.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="input-card">
+    <label class="field-label" for="participantId">Participant ID</label>
+    <div class="input-row">
+      <input
+        type="text"
+        id="participantId"
+        placeholder="Enter ID…"
+        autocomplete="off"
+        autofocus
+      />
+      <button class="btn-start" id="btn-start" onclick="loadArticles()">
+        Start Session
+      </button>
+    </div>
+
+    <div class="session-badge" id="session-badge">
+      <div class="status-dot"></div>
+      <span class="text">Session active —</span>
+      <span class="pid" id="badge-pid">—</span>
+      <button class="btn-reset" onclick="resetSession()">Reset</button>
+    </div>
+  </div>
+
+
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-meta">
+      <span class="label" id="progress-label">Progress</span>
+      <span class="count" id="progress-count">0 of 3 completed</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+
+
+  <div id="articles"></div>
+
+ 
+  <div id="finish-banner">
+    <div class="icon">✓</div>
+    <h3>Session Complete</h3>
+    <p>You have read all three articles.<br>Thank you for participating in this experiment.</p>
+  </div>
+
+</div>
+
+<script>
+let SESSION = null;
+
+window.addEventListener("message", (event) => {
+  if (event.source !== window) return;
+
+  const data = event.data || {};
+
+  if (data.type !== "AI_READING_EXTENSION_PROGRESS") {
+    return;
+  }
+
+  if (!SESSION) {
+    return;
+  }
+
+  if (
+    String(data.participantId || "") !==
+    String(SESSION.participantId || "")
+  ) {
+    return;
+  }
+
+  const completedCount =
+    Number(data.completedCount || 0);
+
+  if (
+    !Number.isFinite(completedCount) ||
+    completedCount < 0 ||
+    completedCount > 3
+  ) {
+    return;
+  }
+
+  for (let i = 0; i < SESSION.opened.length; i++) {
+    SESSION.opened[i] = i < completedCount;
+  }
+
+  saveSession();
+  renderSession();
+});
+
+function requestExtensionProgress() {
+  if (!SESSION) return;
+
+  window.postMessage({
+    type: "AI_READING_REQUEST_EXTENSION_PROGRESS",
+    participantId: SESSION.participantId
+  }, "*");
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  let saved = null;
+
+  try {
+    saved = localStorage.getItem("experiment_session");
+  } catch (e) {
+    localStorage.removeItem("experiment_session");
+  }
+
+  if (saved) {
+    try {
+      SESSION = JSON.parse(saved);
+
+      if (
+        !SESSION ||
+        !SESSION.participantId ||
+        !Array.isArray(SESSION.articles) ||
+        !Array.isArray(SESSION.opened)
+      ) {
+        throw new Error("Invalid saved session");
+      }
+
+      renderSession();
+
+      setTimeout(() => {
+        requestExtensionProgress();
+      }, 300);
+
+    } catch (e) {
+      localStorage.removeItem("experiment_session");
+      SESSION = null;
+    }
+  }
+
+  document.getElementById("participantId")
+    .addEventListener("keydown", (e) => {
+      if (e.key === "Enter") loadArticles();
+    });
+});
+
+window.addEventListener("focus", () => {
+  requestExtensionProgress();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    requestExtensionProgress();
+  }
+});
+
+function isValidParticipantId(participantId) {
+  return /^[A-Za-z0-9_-]{1,20}$/.test(participantId);
+}
+
+async function loadArticles() {
+  const input = document.getElementById("participantId");
+  const pid   = input.value.trim();
+
+  if (!pid) {
+    alert("Please enter a participant ID.");
+    input.focus();
+    return;
+  }
+
+  if (!isValidParticipantId(pid)) {
+    alert("Invalid participant ID. Use only letters, numbers, _ or - . Maximum 20 characters.");
+    input.focus();
+    input.select();
+    return;
+  }
+
+  window.postMessage({
+    type: "AI_READING_RESET_EXTENSION_SESSION"
+  }, "*");
+
+  localStorage.removeItem("experiment_session");
+
+  await new Promise(resolve => setTimeout(resolve, 150));
+
+  const btn        = document.getElementById("btn-start");
+  btn.disabled     = true;
+  btn.textContent  = "Loading…";
+
+  try {
+    const res  = await fetch(`/api/participant/${encodeURIComponent(pid)}`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+
+    SESSION = { participantId: pid, articles: data.articles, opened: [false, false, false] };
+    saveSession();
+    renderSession();
+  } catch {
+    alert("Could not load articles. Please verify your ID and try again.");
+    btn.disabled    = false;
+    btn.textContent = "Start Session";
+  }
+}
+
+function saveSession()  { localStorage.setItem("experiment_session", JSON.stringify(SESSION)); }
+
+function resetSession() {
+  if (!confirm("Reset session? Your progress will be cleared.")) return;
+
+  window.postMessage({
+    type: "AI_READING_RESET_EXTENSION_SESSION"
+  }, "*");
+
+  localStorage.removeItem("experiment_session");
+  SESSION = null;
+
+  setTimeout(() => {
+    location.reload();
+  }, 200);
+}
+
+function renderSession() {
+  if (!SESSION) return;
+
+  const input    = document.getElementById("participantId");
+  input.value    = SESSION.participantId;
+  input.disabled = true;
+
+  document.getElementById("btn-start").style.display      = "none";
+  document.getElementById("badge-pid").textContent         = SESSION.participantId;
+  document.getElementById("session-badge").style.display  = "flex";
+  document.getElementById("progress-wrap").style.display  = "block";
+
+  updateProgress();
+  renderCards();
+}
+
+function updateProgress() {
+  const done = SESSION.opened.filter(Boolean).length;
+  document.getElementById("progress-count").textContent =
+    `${done} of 3 completed`;
+  document.getElementById("progress-label").textContent =
+    done === 3 ? "All done" : `Article ${done + 1} of 3`;
+  document.getElementById("progress-fill").style.width =
+    `${(done / 3) * 100}%`;
+  if (done === 3)
+    document.getElementById("finish-banner").style.display = "block";
+}
+
+function renderCards() {
+  const container = document.getElementById("articles");
+  container.innerHTML = "";
+
+  SESSION.articles.forEach((article, i) => {
+    const prevDone = i === 0 || SESSION.opened[i - 1];
+    const isDone   = SESSION.opened[i];
+    const isActive = !isDone && prevDone;
+    const isLocked = !isDone && !prevDone;
+
+    if (i > 0) {
+      const line = document.createElement("div");
+      line.className = "connector" + (SESSION.opened[i - 1] ? " done" : "");
+      container.appendChild(line);
+    }
+
+    const card = document.createElement("div");
+    card.className = "article-card " + (isDone ? "done" : isActive ? "unlocked" : "locked");
+
+    const circle = document.createElement("div");
+    circle.className = "num-circle " +
+      (isDone ? "done" : isActive ? "active" : "locked-c");
+    circle.textContent = isDone ? "✓" : isLocked ? "🔒" : String(i + 1);
+
+    const textBlock = document.createElement("div");
+    if (isLocked) textBlock.className = "card-locked";
+
+    const meta = document.createElement("div");
+    meta.className   = "card-meta";
+    meta.textContent = `Article ${i + 1}`;
+
+    const title = document.createElement("div");
+    title.className   = "card-title";
+    title.textContent = article.title || `Article ${i + 1}`;
+
+    const status = document.createElement("div");
+    status.className = "card-status" +
+      (isDone ? " done" : isActive ? " active" : "");
+    status.textContent = isDone
+      ? "Completed"
+      : isActive
+      ? "Ready — click Open to start reading"
+      : "Locked — complete the previous article first";
+
+    textBlock.appendChild(meta);
+    textBlock.appendChild(title);
+    textBlock.appendChild(status);
+
+    const btn = document.createElement("a");
+    btn.className   = "btn-action " +
+      (isDone ? "completed" : isLocked ? "locked-btn" : "open");
+    btn.textContent = isDone ? "Done ✓" : isLocked ? "Locked" : "Open →";
+
+    if (isActive && article.url) {
+      const articleUrl = new URL(article.url);
+
+      articleUrl.searchParams.set("participantId", SESSION.participantId);
+      articleUrl.searchParams.set("articleId", String(article.id || i + 1));
+      articleUrl.searchParams.set("articleIndex", String(i + 1));
+
+      btn.href   = articleUrl.toString();
+      btn.target = "_blank";
+      btn.rel    = "noopener noreferrer";
+      btn.addEventListener("click", () => {
+      setTimeout(() => {
+        requestExtensionProgress();
+      }, 500);
+    });
+}
+
+    card.appendChild(circle);
+    card.appendChild(textBlock);
+    card.appendChild(btn);
+    container.appendChild(card);
+  });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+.ai-highlight {
+  background: #fff3a3 !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+}
+
+#ai-side-panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 320px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: white;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  z-index: 999999;
+  padding: 16px;
+  font-family: Arial, sans-serif;
+}
+
+.ai-support-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #f8fafc;
+}
+
+.ai-support-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+}
+
+.ai-support-card p {
+  margin: 6px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#ai-close-panel {
+  float: right;
+  cursor: pointer;
+  font-size: 14px;
+  color: #6b7280;
+}

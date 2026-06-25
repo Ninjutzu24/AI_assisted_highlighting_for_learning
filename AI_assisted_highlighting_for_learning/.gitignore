@@ -1,0 +1,12 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+results.json
+results.xlsx
+*.xlsx
+
+.DS_Store
+Thumbs.db

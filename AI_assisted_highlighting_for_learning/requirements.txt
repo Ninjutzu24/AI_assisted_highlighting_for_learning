@@ -1,0 +1,8 @@
+Flask
+numpy
+scikit-learn
+sentence-transformers
+langdetect
+gunicorn
+openai
+openpyxl

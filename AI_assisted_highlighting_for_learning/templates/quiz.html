@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="page">
+        <div class="card">
+            <h1>Quiz Page</h1>
+            <p>This page will contain the reading comprehension questions in the next step.</p>
+            <a class="primary-link" href="{{ url_for('results') }}">Continue</a>
+        </div>
+    </div>
+</body>
+
+</html>

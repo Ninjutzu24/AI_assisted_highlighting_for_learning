@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Assisted Highlighting</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="page">
+        <div class="card">
+            <h1>AI-Assisted Highlighting for Learning</h1>
+            <p class="subtitle">
+                Compare static highlighting with interactive AI-assisted reading support.
+            </p>
+
+            {% if error %}
+            <div class="error-box">{{ error }}</div>
+            {% endif %}
+
+            <form action="{{ url_for('start') }}" method="POST">
+                <label for="text">Paste your text</label>
+                <textarea id="text" name="text" rows="14"
+                    placeholder="Paste any educational or informational text here..."></textarea>
+
+                <label for="mode">Select reading mode</label>
+                <select id="mode" name="mode">
+                    <option value="static">Static highlighting</option>
+                    <option value="interactive">Interactive AI-assisted support</option>
+                </select>
+
+                <button type="submit">Start Reading</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>
