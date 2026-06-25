@@ -1,3 +1,10 @@
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(
+    dotenv_path=Path(__file__).resolve().parent / ".env"
+)
+
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from utils.preprocessing import split_into_paragraphs
 from utils.highlighting import get_static_highlights
@@ -5,25 +12,21 @@ from utils.interactive_support import build_interactive_support
 from utils.language import detect_language
 from utils.quiz_generator import generate_quiz
 from utils.chatbot import ask_chatbot
+from export_results import export_results_to_excel
 import json
 import os
 
 
 app = Flask(__name__)
-
 with open("articles.json", "r", encoding="utf-8") as f:
     ARTICLES = json.load(f)
 
+with open("quizzes.json", "r", encoding="utf-8") as f:
+    QUIZZES = json.load(f)
+
 
 def get_articles_for_participant(participant_id):
-    total = len(ARTICLES)
-    start = (int(participant_id) * 3) % total
-
-    return [
-        ARTICLES[start % total],
-        ARTICLES[(start + 1) % total],
-        ARTICLES[(start + 2) % total]
-    ]
+    return ARTICLES[:3]
 
 
 CURRENT_DATA = {
@@ -44,6 +47,37 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return response
 
+def build_image_context(images):
+    if not isinstance(images, list) or not images:
+        return "\n\nNo image or figure context was detected on this page."
+
+    lines = [
+        "\n\nIMAGE AND FIGURE CONTEXT:",
+        "The user may ask about images using expressions such as 'image 1', 'first image', 'figure 1', or 'the diagram'.",
+        "Use only the caption, alt text, and nearby article text provided below. Do not pretend to visually inspect the image pixels.",
+        ""
+    ]
+
+    for image in images[:8]:
+        index = image.get("index", "?")
+        alt = image.get("alt", "")
+        caption = image.get("caption", "")
+        nearby_text = image.get("nearbyText", "")
+
+        lines.append(f"[Image {index}]")
+
+        if alt:
+            lines.append(f"Alt text: {alt}")
+
+        if caption:
+            lines.append(f"Caption: {caption}")
+
+        if nearby_text:
+            lines.append(f"Nearby article text: {nearby_text}")
+
+        lines.append("")
+
+    return "\n".join(lines)
 
 def apply_inline_highlights(paragraphs, highlights):
     rendered = []
@@ -61,22 +95,9 @@ def apply_inline_highlights(paragraphs, highlights):
     return rendered
 
 
-# MAIN ENTRY: redirects to the real experiment flow
 @app.route("/", methods=["GET"])
 def index():
     return redirect(url_for("experiment"))
-
-
-# Old paste-text page, kept only for testing/debugging
-@app.route("/demo", methods=["GET"])
-def demo():
-    return render_template("index.html")
-
-
-# Real experiment page
-@app.route("/experiment", methods=["GET"])
-def experiment():
-    return render_template("experiment.html")
 
 
 @app.route("/start", methods=["POST"])
@@ -85,10 +106,7 @@ def start():
     mode = request.form.get("mode", "static")
 
     if not text:
-        return render_template(
-            "index.html",
-            error="Please enter a text before starting."
-        )
+        return render_template("index.html", error="Please enter a text before starting.")
 
     language = detect_language(text)
     paragraphs = split_into_paragraphs(text)
@@ -128,6 +146,7 @@ def api_analyze():
         return ("", 204)
 
     data = request.get_json(silent=True) or {}
+    
     text = data.get("text", "").strip()
     mode = data.get("mode", "static")
 
@@ -137,7 +156,7 @@ def api_analyze():
     language = detect_language(text)
     paragraphs = split_into_paragraphs(text)
 
-    if not paragraphs:
+    if not paragraphs:  
         return jsonify({
             "error": "The text could not be processed into meaningful paragraphs."
         }), 400
@@ -157,93 +176,35 @@ def api_analyze():
 
 @app.route("/api/quiz", methods=["POST", "OPTIONS"])
 def api_quiz():
-    if request.method == "OPTIONS":
-        return ("", 204)
 
-    data = request.get_json(silent=True) or {}
-    text = data.get("text", "").strip()
-
-    if not text:
-        return jsonify({"error": "No text provided"}), 400
-
-    paragraphs = split_into_paragraphs(text)
-    quiz_questions = generate_quiz(paragraphs)
-
-    return jsonify({
-        "quiz": quiz_questions
-    })
-
-
-@app.route("/api/chat", methods=["POST", "OPTIONS"])
-def api_chat():
     if request.method == "OPTIONS":
         return ("", 204)
 
     data = request.get_json(silent=True) or {}
 
-    article = data.get("article", "")
-    question = data.get("question", "")
+    article_id = (
+        data.get("articleId")
+        or data.get("articleIndex")
+        or data.get("id")
+    )
 
-    if not article:
-        return jsonify({"error": "No article provided"}), 400
+    if article_id is None:
+        return jsonify({
+            "error": "No articleId provided"
+        }), 400
 
-    if not question:
-        return jsonify({"error": "No question provided"}), 400
+    article_id = str(article_id)
 
-    answer = ask_chatbot(article, question)
+    if article_id not in QUIZZES:
+        return jsonify({
+            "error": f"No predefined quiz found for article {article_id}"
+        }), 404
 
     return jsonify({
-        "answer": answer
+        "quiz": QUIZZES[article_id]
     })
 
 
-@app.route("/api/save_result", methods=["POST", "OPTIONS"])
-def save_result():
-    if request.method == "OPTIONS":
-        return ("", 204)
-
-    data = request.get_json(silent=True) or {}
-
-    result_entry = {
-        "participantId": data.get("participantId"),
-        "mode": data.get("mode"),
-        "correct": data.get("correct"),
-        "total": data.get("total"),
-        "score": data.get("score")
-    }
-
-    results_file = "results.json"
-
-    if os.path.exists(results_file):
-        try:
-            with open(results_file, "r", encoding="utf-8") as f:
-                results = json.load(f)
-        except Exception:
-            results = []
-    else:
-        results = []
-
-    results.append(result_entry)
-
-    with open(results_file, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=4)
-
-    return jsonify({
-        "success": True
-    })
-
-
-@app.route("/api/participant/<participant_id>")
-def participant_articles(participant_id):
-    assigned_articles = get_articles_for_participant(participant_id)
-
-    return jsonify({
-        "participantId": participant_id,
-        "articles": assigned_articles
-    })
-
-
-# Old placeholder pages, kept only so old links do not break
 @app.route("/quiz", methods=["GET", "POST"])
 def quiz():
     return render_template("quiz.html")
@@ -253,6 +214,133 @@ def quiz():
 def results():
     return render_template("results.html")
 
+@app.route("/api/save_result", methods=["POST", "OPTIONS"])
+def save_result():
+
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    data = request.get_json(silent=True) or {}
+
+    result_entry = {
+    "participantId": data.get("participantId"),
+    "mode": data.get("mode"),
+
+    "articleId": data.get("articleId"),
+    "articleIndex": data.get("articleIndex"),
+
+    "correct": data.get("correct"),
+    "total": data.get("total"),
+    "score": data.get("score"),
+
+    "startedAt": data.get("startedAt"),
+    "quizOpenedAt": data.get("quizOpenedAt"),
+    "submittedAt": data.get("submittedAt"),
+
+    "readingTimeSeconds": data.get("readingTimeSeconds"),
+    "totalTaskTimeSeconds": data.get("totalTaskTimeSeconds"),
+
+    "timeLimitSeconds": data.get("timeLimitSeconds"),
+    "timeLimitReached": data.get("timeLimitReached"),
+
+    "manualHighlightCount": data.get("manualHighlightCount"),
+    "manualHighlightRemoveCount": data.get("manualHighlightRemoveCount"),
+    "aiHighlightCount": data.get("aiHighlightCount"),
+    "interactiveCardsShown": data.get("interactiveCardsShown"),
+    "chatbotQuestionCount": data.get("chatbotQuestionCount"),
+
+    "quizQuestionCount": data.get("quizQuestionCount"),
+    "quizAnsweredCount": data.get("quizAnsweredCount")
+}
+
+    results_file = "results.json"
+
+    if os.path.exists(results_file):
+        try:
+            with open(results_file, "r", encoding="utf-8") as f:
+                results = json.load(f)
+        except:
+            results = []
+    else:
+        results = []
+
+    results.append(result_entry)
+
+    with open(results_file, "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=4, ensure_ascii=False)
+
+    try:
+        export_results_to_excel()
+    except Exception as e:
+        print("[Excel Export] Error:", e)
+
+    return jsonify({
+        "success": True
+    })
+
+@app.route("/api/chat", methods=["POST", "OPTIONS"])
+def api_chat():
+
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    data = request.get_json(silent=True) or {}
+
+    article = data.get("article", "")
+    question = data.get("question", "")
+    images = data.get("images", [])
+
+    if not article:
+        return jsonify({
+            "error": "No article provided"
+        }), 400
+
+    if not question:
+        return jsonify({
+            "error": "No question provided"
+        }), 400
+
+    image_context = build_image_context(images)
+
+    enriched_article = f"""
+ARTICLE TEXT:
+{article}
+
+{image_context}
+"""
+
+    enriched_question = f"""
+User question:
+{question}
+
+Answer clearly and simply. If the user asks about an image or figure, explain it using the IMAGE AND FIGURE CONTEXT when available.
+"""
+
+    answer = ask_chatbot(
+        enriched_article,
+        enriched_question
+    )
+
+    return jsonify({
+        "answer": answer
+    })
+
+@app.route("/experiment")
+def experiment():
+    return render_template("experiment.html")
+
+@app.route("/api/participant/<participant_id>")
+def participant_articles(participant_id):
+
+    assigned_articles = \
+        get_articles_for_participant(participant_id)
+
+    return jsonify({
+        "participantId": participant_id,
+        "articles": assigned_articles
+    })
 
 if __name__ == "__main__":
     app.run(debug=False, host="127.0.0.1", port=8000)
+
+

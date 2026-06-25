@@ -60,10 +60,10 @@ def split_into_paragraphs(text: str) -> list[str]:
     """
     text = text.replace("\r\n", "\n").replace("\r", "\n")
 
-    # Încearcă mai întâi split pe \n\n (paragrafe reale)
+    
     blocks = [block.strip() for block in text.split("\n\n") if block.strip()]
 
-    # Dacă textul nu are \n\n (tot pe o linie sau \n simplu), split pe \n
+   
     if len(blocks) <= 2:
         blocks = [block.strip() for block in text.split("\n") if block.strip()]
 
@@ -80,8 +80,7 @@ def split_into_paragraphs(text: str) -> list[str]:
 
         paragraph = clean_text(" ".join(cleaned_lines))
 
-        # PRAGURI REDUSE față de versiunea anterioară:
-        # 40 caractere (era 80) și 6 cuvinte (era 12)
+       
         if len(paragraph) < 40:
             continue
         if len(paragraph.split()) < 6:
@@ -103,7 +102,7 @@ def split_into_sentences(text: str) -> list[str]:
 
     filtered = []
     for sentence in sentences:
-        # Minim 4 cuvinte (era 5) — mai permisiv
+       
         if len(sentence.split()) >= 4:
             filtered.append(sentence)
 

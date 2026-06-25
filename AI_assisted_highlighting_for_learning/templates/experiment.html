@@ -40,7 +40,7 @@
       padding: 48px 20px 80px;
     }
 
-    /* ── Page wrapper ──────────────────────────────────── */
+    
     .page {
       width: 100%;
       max-width: 580px;
@@ -48,7 +48,7 @@
       animation: appear 0.5s ease forwards;
     }
 
-    /* ── Header ────────────────────────────────────────── */
+    
     .header {
       margin-bottom: 36px;
     }
@@ -97,14 +97,14 @@
       line-height: 1.65;
     }
 
-    /* ── Divider ───────────────────────────────────────── */
+    
     .divider {
       height: 1px;
       background: var(--border);
       margin: 28px 0;
     }
 
-    /* ── Input card ─────────────────────────────────────── */
+    
     .input-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -259,7 +259,7 @@
       width: 0%;
     }
 
-    /* ── Article cards ─────────────────────────────────── */
+    
     #articles { display: flex; flex-direction: column; }
 
     .article-card {
@@ -299,7 +299,7 @@
       background: linear-gradient(135deg, #fff 60%, #f0fdf4 100%);
     }
 
-    /* ── Number circle ─────────────────────────────────── */
+    
     .num-circle {
       width: 44px;
       height: 44px;
@@ -340,7 +340,7 @@
       font-size: 16px;
     }
 
-    /* connector between cards */
+    
     .connector {
       width: 1.5px;
       height: 8px;
@@ -350,7 +350,7 @@
     }
     .connector.done { background: #86efac; }
 
-    /* ── Card text ─────────────────────────────────────── */
+    
     .card-meta {
       font-size: 11px;
       font-weight: 600;
@@ -422,7 +422,6 @@
       cursor: default;
     }
 
-    /* ── Finish banner ─────────────────────────────────── */
     #finish-banner {
       display: none;
       margin-top: 20px;
@@ -454,7 +453,7 @@
       line-height: 1.6;
     }
 
-    /* ── Animations ────────────────────────────────────── */
+    
     @keyframes appear {
       from { opacity: 0; transform: translateY(10px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -479,7 +478,6 @@
 
   <div class="divider"></div>
 
-  <!-- Input -->
   <div class="input-card">
     <label class="field-label" for="participantId">Participant ID</label>
     <div class="input-row">
@@ -503,7 +501,7 @@
     </div>
   </div>
 
-  <!-- Progress -->
+
   <div class="progress-wrap" id="progress-wrap">
     <div class="progress-meta">
       <span class="label" id="progress-label">Progress</span>
@@ -514,10 +512,10 @@
     </div>
   </div>
 
-  <!-- Cards -->
+
   <div id="articles"></div>
 
-  <!-- Finish -->
+ 
   <div id="finish-banner">
     <div class="icon">✓</div>
     <h3>Session Complete</h3>
@@ -529,33 +527,86 @@
 <script>
 let SESSION = null;
 
-window.addEventListener("DOMContentLoaded", () => {
-  try {
-    const saved = localStorage.getItem("experiment_session");
+window.addEventListener("message", (event) => {
+  if (event.source !== window) return;
 
-    if (saved) {
+  const data = event.data || {};
+
+  if (data.type !== "AI_READING_EXTENSION_PROGRESS") {
+    return;
+  }
+
+  if (!SESSION) {
+    return;
+  }
+
+  if (
+    String(data.participantId || "") !==
+    String(SESSION.participantId || "")
+  ) {
+    return;
+  }
+
+  const completedCount =
+    Number(data.completedCount || 0);
+
+  if (
+    !Number.isFinite(completedCount) ||
+    completedCount < 0 ||
+    completedCount > 3
+  ) {
+    return;
+  }
+
+  for (let i = 0; i < SESSION.opened.length; i++) {
+    SESSION.opened[i] = i < completedCount;
+  }
+
+  saveSession();
+  renderSession();
+});
+
+function requestExtensionProgress() {
+  if (!SESSION) return;
+
+  window.postMessage({
+    type: "AI_READING_REQUEST_EXTENSION_PROGRESS",
+    participantId: SESSION.participantId
+  }, "*");
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  let saved = null;
+
+  try {
+    saved = localStorage.getItem("experiment_session");
+  } catch (e) {
+    localStorage.removeItem("experiment_session");
+  }
+
+  if (saved) {
+    try {
       SESSION = JSON.parse(saved);
 
-      const params = new URLSearchParams(window.location.search);
-      const completedArticleIndex = Number(params.get("completedArticleIndex"));
-      const participantId = params.get("participantId");
-
       if (
-        participantId &&
-        SESSION.participantId === participantId &&
-        completedArticleIndex >= 1 &&
-        completedArticleIndex <= 3
+        !SESSION ||
+        !SESSION.participantId ||
+        !Array.isArray(SESSION.articles) ||
+        !Array.isArray(SESSION.opened)
       ) {
-        SESSION.opened[completedArticleIndex - 1] = true;
-        saveSession();
-
-        window.history.replaceState({}, document.title, "/experiment");
+        throw new Error("Invalid saved session");
       }
 
       renderSession();
+
+      setTimeout(() => {
+        requestExtensionProgress();
+      }, 300);
+
+    } catch (e) {
+      localStorage.removeItem("experiment_session");
+      SESSION = null;
     }
-  } catch (e) {
-    localStorage.removeItem("experiment_session");
   }
 
   document.getElementById("participantId")
@@ -564,10 +615,44 @@ window.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+window.addEventListener("focus", () => {
+  requestExtensionProgress();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    requestExtensionProgress();
+  }
+});
+
+function isValidParticipantId(participantId) {
+  return /^[A-Za-z0-9_-]{1,20}$/.test(participantId);
+}
+
 async function loadArticles() {
   const input = document.getElementById("participantId");
   const pid   = input.value.trim();
-  if (!pid) { input.focus(); return; }
+
+  if (!pid) {
+    alert("Please enter a participant ID.");
+    input.focus();
+    return;
+  }
+
+  if (!isValidParticipantId(pid)) {
+    alert("Invalid participant ID. Use only letters, numbers, _ or - . Maximum 20 characters.");
+    input.focus();
+    input.select();
+    return;
+  }
+
+  window.postMessage({
+    type: "AI_READING_RESET_EXTENSION_SESSION"
+  }, "*");
+
+  localStorage.removeItem("experiment_session");
+
+  await new Promise(resolve => setTimeout(resolve, 150));
 
   const btn        = document.getElementById("btn-start");
   btn.disabled     = true;
@@ -588,32 +673,21 @@ async function loadArticles() {
   }
 }
 
-function saveSession()  { localStorage.setItem("experiment_session", JSON.stringify(SESSION));
-  window.addEventListener("message", (event) => {
-  const data = event.data || {};
-
-  if (data.action !== "articleQuizCompleted") return;
-  if (!SESSION) return;
-
-  const participantId = String(data.participantId || "");
-  const articleIndex = Number(data.articleIndex || 1);
-
-  if (participantId && String(SESSION.participantId) !== participantId) return;
-  if (articleIndex < 1 || articleIndex > 3) return;
-
-  SESSION.opened[articleIndex - 1] = true;
-  saveSession();
-  renderSession();
-
-  console.log("Article completed:", articleIndex);
-});
- }
+function saveSession()  { localStorage.setItem("experiment_session", JSON.stringify(SESSION)); }
 
 function resetSession() {
   if (!confirm("Reset session? Your progress will be cleared.")) return;
+
+  window.postMessage({
+    type: "AI_READING_RESET_EXTENSION_SESSION"
+  }, "*");
+
   localStorage.removeItem("experiment_session");
   SESSION = null;
-  location.reload();
+
+  setTimeout(() => {
+    location.reload();
+  }, 200);
 }
 
 function renderSession() {
@@ -654,24 +728,20 @@ function renderCards() {
     const isActive = !isDone && prevDone;
     const isLocked = !isDone && !prevDone;
 
-    // Connector line
     if (i > 0) {
       const line = document.createElement("div");
       line.className = "connector" + (SESSION.opened[i - 1] ? " done" : "");
       container.appendChild(line);
     }
 
-    // Card
     const card = document.createElement("div");
     card.className = "article-card " + (isDone ? "done" : isActive ? "unlocked" : "locked");
 
-    // Circle
     const circle = document.createElement("div");
     circle.className = "num-circle " +
       (isDone ? "done" : isActive ? "active" : "locked-c");
     circle.textContent = isDone ? "✓" : isLocked ? "🔒" : String(i + 1);
 
-    // Text block
     const textBlock = document.createElement("div");
     if (isLocked) textBlock.className = "card-locked";
 
@@ -696,7 +766,6 @@ function renderCards() {
     textBlock.appendChild(title);
     textBlock.appendChild(status);
 
-    // Button
     const btn = document.createElement("a");
     btn.className   = "btn-action " +
       (isDone ? "completed" : isLocked ? "locked-btn" : "open");
@@ -706,15 +775,18 @@ function renderCards() {
       const articleUrl = new URL(article.url);
 
       articleUrl.searchParams.set("participantId", SESSION.participantId);
+      articleUrl.searchParams.set("articleId", String(article.id || i + 1));
       articleUrl.searchParams.set("articleIndex", String(i + 1));
 
-      btn.href = articleUrl.toString(); 
+      btn.href   = articleUrl.toString();
       btn.target = "_blank";
-
+      btn.rel    = "noopener noreferrer";
       btn.addEventListener("click", () => {
-      console.log("Article opened:", i + 1);
-      });
-    }
+      setTimeout(() => {
+        requestExtensionProgress();
+      }, 500);
+    });
+}
 
     card.appendChild(circle);
     card.appendChild(textBlock);

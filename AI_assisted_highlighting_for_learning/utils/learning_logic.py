@@ -164,9 +164,6 @@ def choose_learning_sentences(paragraph: str, max_sentences: int = 2) -> list[st
     return selected
 
 
-# ---------------------------------------------------------------------------
-# CORE: selecție zonală garantată
-# ---------------------------------------------------------------------------
 
 def _divide_into_zones(total: int, num_zones: int) -> list[tuple[int, int]]:
     """
@@ -199,8 +196,6 @@ def _best_in_zone(
         item for item in ranked_items
         if start <= item[0] < end and item[0] not in used and item[2] > -50
     ]
-    # Sortăm după scor descrescător (ranked_items poate fi deja sortat,
-    # dar zona poate conține iteme în orice ordine după filtrare)
     zone_items.sort(key=lambda x: x[2], reverse=True)
     return zone_items[:n]
 
@@ -225,7 +220,6 @@ def choose_static_paragraphs(
 
     total_p = len(paragraphs)
 
-    # max_highlights dinamic: ~25-35% din paragrafe, între 10 și 40
     if max_highlights is None:
         max_highlights = max(10, min(40, int(total_p * 0.30)))
 
@@ -233,30 +227,28 @@ def choose_static_paragraphs(
     if not ranked_all:
         return []
 
-    # Eliminăm gunoiul clar; dacă rămân prea puține, relaxăm pragul
     ranked = [p for p in ranked_all if p[2] > -50]
     if len(ranked) < max(5, total_p // 10):
         ranked = [p for p in ranked_all if p[2] > -100]
 
-    # Număr de zone: 1 zonă la fiecare ~4 paragrafe, între 4 și 12
+    
     num_zones = max(4, min(12, total_p // 4))
     zones = _divide_into_zones(total_p, num_zones)
 
-    # Câte paragrafe garantăm per zonă
-    # Distribuim max_highlights egal; cel puțin 1 per zonă
+    
     min_per_zone = max(1, max_highlights // num_zones)
 
     selected = []
     used_indices = set()
 
-    # PASUL 1: Selecție garantată per zonă
+    
     for start, end in zones:
         best = _best_in_zone(ranked, start, end, used_indices, n=min_per_zone)
         for item in best:
             selected.append(item)
             used_indices.add(item[0])
 
-    # PASUL 2: Completare cu cele mai bune rămase (orice zonă)
+  
     for item in ranked:
         if len(selected) >= max_highlights:
             break
@@ -264,7 +256,7 @@ def choose_static_paragraphs(
             selected.append(item)
             used_indices.add(item[0])
 
-    # Sortare finală: ordinea de citire
+    
     selected.sort(key=lambda x: x[0])
     return selected
 
@@ -288,7 +280,7 @@ def choose_interactive_paragraphs(
     selected = []
     used = set()
 
-    # Împărțim în max_cards zone egale și luăm cel mai bun din fiecare
+    
     zones = _divide_into_zones(total, max_cards)
     for start, end in zones:
         best = _best_in_zone(ranked, start, end, used, n=1)
@@ -296,8 +288,7 @@ def choose_interactive_paragraphs(
             selected.append(item)
             used.add(item[0])
 
-    # Dacă dintr-o zonă nu s-a putut selecta nimic (paragraf gunoi),
-    # completăm cu cel mai bun rămas global
+    
     for item in ranked:
         if len(selected) >= max_cards:
             break
@@ -309,9 +300,8 @@ def choose_interactive_paragraphs(
     return selected[:max_cards]
 
 
-# ---------------------------------------------------------------------------
-# Utilitare pentru construirea conținutului cardurilor
-# ---------------------------------------------------------------------------
+
+
 
 def extract_focus_terms(sentence: str, language: str) -> list[str]:
     words = tokenize(sentence)

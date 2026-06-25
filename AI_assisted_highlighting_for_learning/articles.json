@@ -1,77 +1,23 @@
 [
   {
     "id": 1,
-    "title": "The Use of New Technologies for Improving Reading Comprehension",
-    "url": "https://www.frontiersin.org/article/10.3389/fpsyg.2020.00751/full"
+    "title": "Webb's Scientific Instruments",
+    "url": "https://science.nasa.gov/mission/webb/science-overview/science-explainers/webbs-scientific-instruments/",
+    "source": "NASA Science",
+    "topic": "Space telescope, scientific instruments, infrared observation"
   },
   {
     "id": 2,
-    "title": "Educational Automatic Question Generation Improves Reading Comprehension",
-    "url": "https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2022.900304/full"
+    "title": "A 'Robot Pizza Chef' Serving Up Better Quantum Computers",
+    "url": "https://newscenter.lbl.gov/2026/02/11/a-robot-pizza-chef-serving-up-better-quantum-computers/",
+    "source": "Berkeley Lab",
+    "topic": "Quantum computers, robotic fabrication, qubits, AI-assisted materials research"
   },
   {
     "id": 3,
-    "title": "More Than One Way: Fifth-Graders’ Varied Digital Reading Behaviors",
-    "url": "https://journals.sagepub.com/doi/abs/10.1177/23328584241226633"
-  },
-  {
-    "id": 4,
-    "title": "Exploring EFL Learners’ Inferential Reading Comprehension Skills Through a Flipped Classroom",
-    "url": "https://link.springer.com/article/10.1186/s41039-021-00157-9"
-  },
-  {
-    "id": 5,
-    "title": "Relation Between Digital Tool Practices and Reading Comprehension Scores",
-    "url": "https://link.springer.com/article/10.1007/s11145-022-10295-1"
-  },
-  {
-    "id": 6,
-    "title": "Effects of Two Computer-Based Interventions on Reading Comprehension",
-    "url": "https://www.sciencedirect.com/science/article/pii/S0360131523000040"
-  },
-  {
-    "id": 7,
-    "title": "Comparing AI-Assisted and Teacher-Led Reading Strategy Instruction",
-    "url": "https://www.frontiersin.org/articles/10.3389/feduc.2026.1828564"
-  },
-  {
-    "id": 8,
-    "title": "Do Open Educational Resources Improve Student Learning?",
-    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0212508"
-  },
-  {
-    "id": 9,
-    "title": "Assessing Reading and Online Research Comprehension",
-    "url": "https://www.sciencedirect.com/science/article/pii/S1041608021000224"
-  },
-  {
-    "id": 10,
-    "title": "The Impact of Flipping Class Intervention on Reading Comprehension",
-    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0305041"
-  },
-  {
-    "id": 11,
-    "title": "Examining Reading Proficiency and Science Learning Using Mixed Reality",
-    "url": "https://www.sciencedirect.com/science/article/pii/S2949678024000369"
-  },
-  {
-    "id": 12,
-    "title": "The Impact of Reading Modalities and Text Types on Reading",
-    "url": "https://www.mdpi.com/2076-3417/13/19/10802"
-  },
-  {
-    "id": 13,
-    "title": "Machine Reading Comprehension: A Literature Review",
-    "url": "https://arxiv.org/abs/1907.01686"
-  },
-  {
-    "id": 14,
-    "title": "Attention-Driven Read-Aloud Technology Increases Reading Comprehension",
-    "url": "https://arxiv.org/abs/2103.05296"
-  },
-  {
-    "id": 15,
-    "title": "Trends, Limitations and Open Challenges in Automatic Readability Assessment",
-    "url": "https://arxiv.org/abs/2105.00973"
+    "title": "Fiber computer allows apparel to run apps and 'understand' the wearer",
+    "url": "https://news.mit.edu/2025/fiber-computer-allows-apparel-to-run-apps-and-understand-wearer-0226",
+    "source": "MIT News",
+    "topic": "Smart clothing, wearable computing, sensors, machine learning, health monitoring"
   }
 ]

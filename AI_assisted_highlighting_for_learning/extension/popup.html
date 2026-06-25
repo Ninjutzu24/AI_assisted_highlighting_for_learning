@@ -54,7 +54,6 @@
       min-height: 16px;
     }
 
-    /* ── Panoul de sesiune activă ── */
     #activeSession {
       background: #eff6ff;
       border: 1px solid #bfdbfe;
@@ -83,21 +82,20 @@
 <body>
   <h2>AI Reading Support</h2>
 
-  <!-- ── SETUP (vizibil doar când nu există sesiune) ── -->
+ 
   <div id="setupSection">
     <p>Enter your participant ID to start the study session.</p>
     <input id="participantId" type="text" placeholder="Participant ID (e.g. 42)" />
     <button id="startStudy">▶ Start Session</button>
   </div>
 
-  <!-- ── SESIUNE ACTIVĂ (vizibil când există studyState) ── -->
+  
   <div id="activeSection" class="hidden">
     <div id="activeSession">
       <div id="participantLabel"></div>
       <div id="stepLabel" class="step-label"></div>
     </div>
-    <button id="btnResumeMode">↺ Re-run Current Mode</button>
-    <button id="btnResetSession" class="danger">✕ Reset Session</button>
+    <button id="btnResumeMode">▶ Start Current Mode</button>
   </div>
 
   <div id="status">Ready.</div>

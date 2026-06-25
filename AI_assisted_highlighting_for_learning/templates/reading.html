@@ -34,10 +34,9 @@
                 {% endfor %}
                 {% endif %}
 
-                <p class="panel-note">
-                        When you finish reading, use the extension button “Finish & Take Quiz”.
-
-                </p>
+                <div class="actions-row">
+                    <a class="primary-link" href="{{ url_for('quiz') }}">Continue to Quiz</a>
+                </div>
             </div>
 
             {% if mode == "interactive" %}

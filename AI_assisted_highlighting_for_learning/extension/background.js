@@ -1,6 +1,3 @@
-// ═══════════════════════════════════════════════════════════════
-// BACKGROUND.JS — UN SINGUR LISTENER PENTRU TOATE MESAJELE
-// ═══════════════════════════════════════════════════════════════
 
 const DEV_BACKEND_URLS = [
   "http://127.0.0.1:8000/api/analyze",
@@ -11,11 +8,7 @@ const PROD_BACKEND_URL = null;
 
 function getBackendCandidates() {
   const urls = [];
-
-  if (PROD_BACKEND_URL) {
-    urls.push(PROD_BACKEND_URL);
-  }
-
+  if (PROD_BACKEND_URL) urls.push(PROD_BACKEND_URL);
   urls.push(...DEV_BACKEND_URLS);
   return urls;
 }
@@ -23,34 +16,21 @@ function getBackendCandidates() {
 async function callBackend(url, text, mode) {
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      text,
-      mode
-    })
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, mode })
   });
-
   const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(data.error || `Backend error at ${url}`);
-  }
-
+  if (!response.ok) throw new Error(data.error || `Backend error at ${url}`);
   return data;
 }
 
 async function callFirstAvailableBackend(text, mode) {
   const candidates = getBackendCandidates();
   let lastError = null;
-
   for (const url of candidates) {
     try {
       console.log("[BG] Trying backend:", url);
-
       const data = await callBackend(url, text, mode);
-
       console.log("[BG] Backend success:", url);
       return data;
     } catch (error) {
@@ -58,13 +38,9 @@ async function callFirstAvailableBackend(text, mode) {
       lastError = error;
     }
   }
-
   throw lastError || new Error("No backend URL available");
 }
 
-// ═══════════════════════════════════════════════════════════════
-// STUDY FLOW
-// ═══════════════════════════════════════════════════════════════
 
 async function handleNextStudyMode() {
   const result = await chrome.storage.local.get("studyState");
@@ -77,9 +53,15 @@ async function handleNextStudyMode() {
 
   studyState.currentStep++;
 
-  if (studyState.currentStep >= studyState.modeOrder.length) {
-    await chrome.storage.local.set({ studyState });
+  await chrome.storage.local.set({ studyState });
 
+  console.log(
+    "[BG] Quiz finished. Progress saved. Current step is now:",
+    studyState.currentStep
+  );
+
+  // Dacă toate modurile sunt terminate, anunțăm tab-ul curent.
+  if (studyState.currentStep >= studyState.modeOrder.length) {
     const tabs = await chrome.tabs.query({
       active: true,
       currentWindow: true
@@ -96,179 +78,85 @@ async function handleNextStudyMode() {
     return;
   }
 
-  await chrome.storage.local.set({ studyState });
-
-  const nextMode = studyState.modeOrder[studyState.currentStep];
-
-  console.log("[BG] Next mode:", nextMode, "Step:", studyState.currentStep);
-
-  const tabs = await chrome.tabs.query({
-    active: true,
-    currentWindow: true
-  });
-
-  const tab = tabs[0];
-
-  if (!tab?.id) return;
-
-  if (nextMode === "static") {
-    chrome.tabs.sendMessage(tab.id, {
-      action: "activateManualMode"
-    });
-  } else {
-    chrome.tabs.sendMessage(tab.id, {
-      action: "analyzePage",
-      mode: nextMode
-    });
-  }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MARK ARTICLE COMPLETE IN /experiment TAB
-// ═══════════════════════════════════════════════════════════════
-
-async function markArticleCompletedInExperimentTabs(participantId, articleIndex) {
-  const tabs = await chrome.tabs.query({});
-
-  const experimentTabs = tabs.filter((tab) => {
-    if (!tab.url) return false;
-
-    try {
-      const url = new URL(tab.url);
-
-      return (
-        (url.hostname === "127.0.0.1" || url.hostname === "localhost") &&
-        url.port === "8000" &&
-        url.pathname === "/experiment"
-      );
-    } catch (error) {
-      return false;
-    }
-  });
-
-  for (const tab of experimentTabs) {
-    if (!tab.id) continue;
-
-    chrome.tabs.sendMessage(
-      tab.id,
-      {
-        action: "markArticleCompletedOnExperimentPage",
-        participantId,
-        articleIndex
-      },
-      (resp) => {
-        if (chrome.runtime.lastError) {
-          console.warn(
-            "[BG] Could not notify experiment tab:",
-            chrome.runtime.lastError.message
-          );
-          return;
-        }
-
-        console.log("[BG] Experiment tab updated:", resp);
-      }
-    );
-  }
-
-  return experimentTabs.length;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// UN SINGUR LISTENER — toate acțiunile
-// ═══════════════════════════════════════════════════════════════
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "goToExperimentPage") {
+  chrome.tabs.query({}, (tabs) => {
+    const experimentTab = tabs.find((tab) =>
+      tab.url &&
+      (
+        tab.url.startsWith("http://127.0.0.1:8000/experiment") ||
+        tab.url.startsWith("http://localhost:8000/experiment")
+      )
+    );
 
-  // ── Apel backend ──────────────────────────────────────────
+    if (experimentTab?.id) {
+      chrome.tabs.update(experimentTab.id, {
+        active: true
+      });
+
+      if (experimentTab.windowId) {
+        chrome.windows.update(experimentTab.windowId, {
+          focused: true
+        });
+      }
+
+      sendResponse({
+        ok: true,
+        status: "Switched to experiment page."
+      });
+
+      return;
+    }
+
+    chrome.tabs.create({
+      url: "http://127.0.0.1:8000/experiment"
+    }, () => {
+      sendResponse({
+        ok: true,
+        status: "Opened experiment page."
+      });
+    });
+  });
+
+  return true;
+}
+ 
   if (message.action === "callBackend") {
     (async () => {
       try {
-        const data = await callFirstAvailableBackend(
-          message.text,
-          message.mode
-        );
-
-        sendResponse({
-          ok: true,
-          data
-        });
+        const data = await callFirstAvailableBackend(message.text, message.mode);
+        sendResponse({ ok: true, data });
       } catch (error) {
         console.error("[BG] All backend calls failed:", error);
-
-        sendResponse({
-          ok: false,
-          error: error.message || "Could not reach backend"
-        });
+        sendResponse({ ok: false, error: error.message || "Could not reach backend" });
       }
     })();
-
-    return true;
+    return true; 
   }
 
-  // ── Marchează articolul completat în pagina /experiment ──
-  if (message.action === "markArticleCompleted") {
-    (async () => {
-      try {
-        const participantId = String(message.participantId || "");
-        const articleIndex = Number(message.articleIndex || 1);
-
-        const updatedTabs = await markArticleCompletedInExperimentTabs(
-          participantId,
-          articleIndex
-        );
-
-        sendResponse({
-          ok: true,
-          updatedTabs
-        });
-      } catch (error) {
-        console.error("[BG] markArticleCompleted error:", error);
-
-        sendResponse({
-          ok: false,
-          error: error.message || "Could not mark article completed"
-        });
-      }
-    })();
-
-    return true;
-  }
-
-  // ── Quiz terminat → trece la modul următor ────────────────
+  
   if (message.action === "quizFinished") {
     handleNextStudyMode();
-
-    sendResponse({
-      ok: true
-    });
-
+    sendResponse({ ok: true });
     return true;
   }
 
-  // ── Manual mode state pentru popup ────────────────────────
+  
   if (message.action === "setManualMode") {
     const key = `manualMode_${message.tabId}`;
-
-    chrome.storage.session.set({
-      [key]: message.value
-    });
-
-    sendResponse({
-      ok: true
-    });
-
+    chrome.storage.session.set({ [key]: message.value });
+    sendResponse({ ok: true });
     return true;
   }
 
   if (message.action === "getManualMode") {
     const key = `manualMode_${message.tabId}`;
-
     chrome.storage.session.get([key], (result) => {
-      sendResponse({
-        value: !!result[key]
-      });
+      sendResponse({ value: !!result[key] });
     });
-
     return true;
   }
 });

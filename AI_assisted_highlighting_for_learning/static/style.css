@@ -160,22 +160,17 @@ button,
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ADAUGĂ LA styles.css EXISTENT
-   ═══════════════════════════════════════════════════════════════ */
 
-/* ── Static mode highlight (existent, verifică să nu fie duplicat) ── */
 span.ai-highlight {
   background-color: #ffe066;
   border-radius: 2px;
   padding: 0 1px;
 }
 
-/* ── Manual mode highlight ── */
+
 span.ai-manual-highlight {
   border-radius: 2px;
   padding: 0 1px;
-  /* background-color vine inline din JS (culoarea aleasă) */
   transition: filter 0.15s;
 }
 
@@ -183,9 +178,7 @@ span.ai-manual-highlight:hover {
   filter: brightness(0.88);
 }
 
-/* ── Paleta de culori flotantă ── */
-/* Stilurile principale vin inline din JS pentru izolare față de
-   CSS-ul paginii gazdă. Dacă vrei să le muți în CSS:          */
+
 
 #ai-color-palette {
   position: fixed;
@@ -198,7 +191,6 @@ span.ai-manual-highlight:hover {
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   align-items: center;
-  /* animație subtilă la apariție */
   animation: ai-palette-in 0.12s ease-out;
 }
 
@@ -208,12 +200,11 @@ span.ai-manual-highlight:hover {
 }
 
 #ai-color-palette button {
-  /* resetăm stilurile button-ului din pagina gazdă */
   all: unset;
   box-sizing: border-box;
 }
 
-/* ── Tooltip Remove ── */
+
 #ai-manual-remove-tooltip {
   position: fixed;
   z-index: 2147483647;

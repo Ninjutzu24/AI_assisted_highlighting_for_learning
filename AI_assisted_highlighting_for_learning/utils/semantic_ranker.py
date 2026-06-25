@@ -46,7 +46,6 @@ def sentence_quality_score(sentence: str, position: int = 0) -> float:
     elif word_count > 48:
         score -= 2.0
 
-    # Bonus mic pentru prima propoziție (topic sentence)
     if position == 0:
         score += 0.3
 
@@ -103,10 +102,9 @@ def _build_global_topic_embedding(paragraphs: list[str], model) -> np.ndarray:
     if n == 0:
         return model.encode([""], normalize_embeddings=True)[0]
 
-    # Alegem maxim 9 paragrafe eșantionate uniform
+    
     num_samples = min(9, n)
     indices = [int(round(i * (n - 1) / (num_samples - 1))) for i in range(num_samples)] if num_samples > 1 else [0]
-    # Eliminăm duplicate
     indices = sorted(set(indices))
 
     sampled_text = " ".join(paragraphs[i] for i in indices)
@@ -125,14 +123,12 @@ def rank_paragraphs_with_index(paragraphs: list[str]) -> list[tuple[int, str, fl
     model = get_model()
     paragraph_embeddings = model.encode(paragraphs, normalize_embeddings=True)
 
-    # Topic global — eșantionat uniform din tot textul
     topic_embedding = _build_global_topic_embedding(paragraphs, model)
 
     ranked = []
     for idx, (paragraph, emb) in enumerate(zip(paragraphs, paragraph_embeddings)):
         similarity = cosine(emb, topic_embedding)
         q_score = paragraph_quality_score(paragraph, idx, len(paragraphs))
-        # Similaritatea contribuie cu 2.5x (importantă dar nu dominantă)
         score = similarity * 2.5 + q_score
         ranked.append((idx, paragraph, score))
 

@@ -36,24 +36,31 @@ def sentence_quality_score(sentence: str, position: int = 0) -> float:
     word_count = len(words)
     score = 0.0
 
-    if 7 <= word_count <= 30:
+    if 7 <= word_count <= 26:
         score += 2.0
-    elif 31 <= word_count <= 42:
+    elif 27 <= word_count <= 36:
         score += 1.0
     elif word_count < 5:
         score -= 2.0
-    elif word_count > 48:
+    elif word_count > 42:
         score -= 2.0
 
     if position == 0:
-        score += 0.5
+        score += 0.7
 
     lowered = sentence.lower()
+    cue_phrases = [
+        "este", "sunt", "înseamnă", "reprezintă", "se numește",
+        "poate fi", "include", "conține", "because", "means",
+        "refers to", "represents", "is", "are", "includes", "contains"
+    ]
+    if any(cue in lowered for cue in cue_phrases):
+        score += 1.0
 
     bad_patterns = [
         r"\bedit\b", r"\bmodificare\b", r"\bsource\b", r"\bsursă\b",
         r"\bprivacy\b", r"\bcookie\b", r"\bfigure\b", r"\bimage\b",
-        r"\bvideo\b", r"\bmenu\b", r"\bmeniu\b"
+        r"\bvideo\b", r"\bmeniu\b", r"\bmenu\b"
     ]
     for pattern in bad_patterns:
         if re.search(pattern, lowered):
@@ -67,23 +74,24 @@ def paragraph_quality_score(paragraph: str, index: int = 0, total: int = 1) -> f
     word_count = len(words)
     score = 0.0
 
-    if 20 <= word_count <= 180:
+    if 25 <= word_count <= 170:
         score += 2.0
     elif word_count < 15:
         score -= 1.5
 
-   
+    # bonus de început: introducerea este importantă pentru învățare
     if index == 0:
-        score += 1.6
+        score += 2.0
     elif index == 1:
-        score += 0.9
+        score += 1.2
     elif index == 2:
-        score += 0.4
+        score += 0.6
 
+    # mic bonus și pentru zona mediană, ca să nu luăm doar începutul
     if total >= 6:
         middle = total // 2
         if abs(index - middle) <= 1:
-            score += 0.3
+            score += 0.4
 
     lowered = paragraph.lower()
     bad_patterns = [
@@ -95,6 +103,11 @@ def paragraph_quality_score(paragraph: str, index: int = 0, total: int = 1) -> f
             score -= 2.5
 
     return score
+
+
+def encode_texts(texts: list[str]):
+    model = get_model()
+    return model.encode(texts, normalize_embeddings=True)
 
 
 def rank_paragraphs_with_index(paragraphs: list[str]) -> list[tuple[int, str, float]]:
@@ -122,13 +135,13 @@ def rank_paragraphs(paragraphs: list[str]) -> list[tuple[str, float]]:
     return [(paragraph, score) for _, paragraph, score in ranked]
 
 
-def sentence_candidates_for_paragraph(paragraph: str) -> list[tuple[int, str, float, float]]:
+def best_sentence_for_paragraph(paragraph: str) -> str:
     sentences = split_into_sentences(paragraph)
     if not sentences:
-        return []
+        return paragraph.strip()
 
     if len(sentences) == 1:
-        return [(0, sentences[0].strip(), 10.0, 1.0)]
+        return sentences[0].strip()
 
     model = get_model()
     sentence_embeddings = model.encode(sentences, normalize_embeddings=True)
@@ -138,14 +151,7 @@ def sentence_candidates_for_paragraph(paragraph: str) -> list[tuple[int, str, fl
     for idx, (sentence, emb) in enumerate(zip(sentences, sentence_embeddings)):
         similarity = cosine(emb, paragraph_embedding)
         score = similarity * 4.0 + sentence_quality_score(sentence, idx)
-        ranked.append((idx, sentence.strip(), score, similarity))
+        ranked.append((sentence, score))
 
-    ranked.sort(key=lambda x: x[2], reverse=True)
-    return ranked
-
-
-def best_sentence_for_paragraph(paragraph: str) -> str:
-    ranked = sentence_candidates_for_paragraph(paragraph)
-    if not ranked:
-        return paragraph.strip()
-    return ranked[0][1]
+    ranked.sort(key=lambda x: x[1], reverse=True)
+    return ranked[0][0].strip()

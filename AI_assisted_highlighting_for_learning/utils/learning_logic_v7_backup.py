@@ -149,7 +149,6 @@ def choose_static_paragraphs(paragraphs: list[str], max_highlights: int = 12) ->
     total = len(paragraphs)
     target_count = min(max_highlights, max(6, int(total * 0.85)))
 
-    # pentru texte scurte sau medii: aproape toate paragrafele
     if total <= 12:
         ordered = sorted(ranked, key=lambda x: x[0])
         return ordered[:target_count]
