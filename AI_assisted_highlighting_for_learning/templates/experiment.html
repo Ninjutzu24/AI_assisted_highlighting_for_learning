@@ -114,6 +114,56 @@
       box-shadow: var(--shadow-sm);
     }
 
+    .questionnaire-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 26px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .questionnaire-card h2 {
+      font-family: 'IBM Plex Serif', serif;
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--ink);
+    }
+
+    .questionnaire-card p {
+      font-size: 14px;
+      color: var(--ink-3);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .btn-form {
+      display: inline-block;
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.15s;
+    }
+
+    .btn-form:hover {
+      background: #15803d;
+      transform: translateY(-1px);
+    }
+
+    .form-note {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--ink-3);
+    }
+
     .field-label {
       display: block;
       font-size: 12px;
@@ -475,9 +525,7 @@
     <h1>Reading <span>Experiment</span></h1>
     <p>Enter your participant ID to receive your assigned<br>reading sequence for today's session.</p>
   </div>
-
   <div class="divider"></div>
-
   <div class="input-card">
     <label class="field-label" for="participantId">Participant ID</label>
     <div class="input-row">
@@ -493,6 +541,7 @@
       </button>
     </div>
 
+
     <div class="session-badge" id="session-badge">
       <div class="status-dot"></div>
       <span class="text">Session active —</span>
@@ -500,8 +549,29 @@
       <button class="btn-reset" onclick="resetSession()">Reset</button>
     </div>
   </div>
+    <!-- Demographic Questionnaire -->
+  <div class="questionnaire-card" id="demographic-card" style="display: none;">
+    <h2>Initial Questionnaire</h2>
 
+    <p>
+      Before starting the reading experiment, please complete the short initial questionnaire.
+      Use the same Participant ID in the form and in the experiment application.
+    </p>
 
+    <a
+      id="demographic-link"
+      class="btn-form"
+      href="https://docs.google.com/forms/d/e/1FAIpQLSfFRZdigbY9pqrwUImKr940PWPsP-1jMExUGTfO5uh7b3korA/viewform?usp=publish-editor"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Complete Initial Questionnaire →
+    </a>
+
+    <div class="form-note">
+      After submitting the questionnaire, return to this page and start the experiment.
+    </div>
+  </div>
   <div class="progress-wrap" id="progress-wrap">
     <div class="progress-meta">
       <span class="label" id="progress-label">Progress</span>
@@ -516,11 +586,30 @@
   <div id="articles"></div>
 
  
-  <div id="finish-banner">
-    <div class="icon">✓</div>
-    <h3>Session Complete</h3>
-    <p>You have read all three articles.<br>Thank you for participating in this experiment.</p>
+  <!-- Finish -->
+<div id="finish-banner">
+  <div class="icon">✓</div>
+  <h3>Session Complete</h3>
+  <p>
+    You have read all three articles and completed all comprehension quizzes.<br>
+    Thank you for participating in this experiment.
+  </p>
+
+  <div style="margin-top:18px;">
+    <a
+      class="btn-form"
+      href="https://docs.google.com/forms/d/e/1FAIpQLSdhq4PnA1v34UUs9pePHu2LOxBqyG1LAiB9tv0gmTbj5muiPA/viewform?usp=publish-editor"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Complete Final Feedback Questionnaire →
+    </a>
   </div>
+
+  <div class="form-note">
+    Please use the same Participant ID that you used in the experiment.
+  </div>
+</div>
 
 </div>
 
@@ -663,7 +752,12 @@ async function loadArticles() {
     if (!res.ok) throw new Error();
     const data = await res.json();
 
-    SESSION = { participantId: pid, articles: data.articles, opened: [false, false, false] };
+    SESSION = {
+      participantId: pid,
+      articles: data.articles,
+      opened: [false, false, false],
+      demographicOpened: false
+    };
     saveSession();
     renderSession();
   } catch {
@@ -693,6 +787,12 @@ function resetSession() {
 function renderSession() {
   if (!SESSION) return;
 
+  const demographicCard = document.getElementById("demographic-card");
+
+  if (demographicCard) {
+    demographicCard.style.display = SESSION.demographicOpened ? "none" : "block";
+  }
+  
   const input    = document.getElementById("participantId");
   input.value    = SESSION.participantId;
   input.disabled = true;
@@ -723,10 +823,14 @@ function renderCards() {
   container.innerHTML = "";
 
   SESSION.articles.forEach((article, i) => {
+    const demographicReady = SESSION.demographicOpened === true;
     const prevDone = i === 0 || SESSION.opened[i - 1];
     const isDone   = SESSION.opened[i];
-    const isActive = !isDone && prevDone;
-    const isLocked = !isDone && !prevDone;
+
+    const canOpen  = prevDone && (i !== 0 || demographicReady);
+
+    const isActive = !isDone && canOpen;
+    const isLocked = !isDone && !canOpen;
 
     if (i > 0) {
       const line = document.createElement("div");
@@ -756,11 +860,15 @@ function renderCards() {
     const status = document.createElement("div");
     status.className = "card-status" +
       (isDone ? " done" : isActive ? " active" : "");
-    status.textContent = isDone
-      ? "Completed"
-      : isActive
-      ? "Ready — click Open to start reading"
-      : "Locked — complete the previous article first";
+    if (isDone) {
+      status.textContent = "Completed";
+    } else if (i === 0 && !demographicReady) {
+      status.textContent = "Locked — complete the demographic questionnaire first";
+    } else if (isActive) {
+      status.textContent = "Ready — click Open to start reading";
+    } else {
+      status.textContent = "Locked — complete the previous article first";
+    }
 
     textBlock.appendChild(meta);
     textBlock.appendChild(title);
@@ -794,6 +902,19 @@ function renderCards() {
     container.appendChild(card);
   });
 }
+
+const demographicLink = document.getElementById("demographic-link");
+
+if (demographicLink) {
+  demographicLink.addEventListener("click", () => {
+    if (!SESSION) return;
+
+    SESSION.demographicOpened = true;
+    saveSession();
+    renderSession();
+  });
+}
+
 </script>
 
 </body>

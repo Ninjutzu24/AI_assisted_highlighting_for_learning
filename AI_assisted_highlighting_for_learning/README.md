@@ -12,68 +12,66 @@ The experiment uses the same three articles for all participants and each articl
 
 ### 1. Check Python version
 
-```powershell
+
 py --version
-```
+
 
 ### 2. Create a virtual environment
 
-```powershell
+
 py -m venv .venv
-```
+
 
 ### 3. Activate the virtual environment
 
-```powershell
+
 .\.venv\Scripts\Activate.ps1
-```
+
 
 ### 4. Install requirements
 
-```powershell
+
 py -m pip install -r requirements.txt
-```
+
 
 ### 5. Run the Flask server
 
-```powershell
+
 py app.py
-```
+
 
 ### 6. Open the application
 
 After starting the server, open:
 
-```text
 http://127.0.0.1:8000
-```
+
 
 or directly:
 
-```text
 http://127.0.0.1:8000/experiment
-```
+
 
 ## Browser extension setup
 
 1. Open Google Chrome or Brave.
 2. Go to:
 
-```text
+
 chrome://extensions
-```
+
 
 3. Enable Developer Mode.
 4. Click "Load unpacked".
 5. Select the project folder that contains the extension files, including:
 
-```text
+
 manifest.json
 background.js
 content.js
 popup.html
 popup.js
-```
+
 
 6. Start the Flask server before using the extension.
 

@@ -39,6 +39,39 @@ CURRENT_DATA = {
     "interactive_data": [],
 }
 
+def extract_participant_number(participant_id):
+    digits = "".join(ch for ch in str(participant_id) if ch.isdigit())
+
+    if digits:
+        return int(digits)
+
+    return 1
+
+
+def get_counterbalanced_articles(participant_id, articles):
+    participant_number = extract_participant_number(participant_id)
+
+    group_index = ((participant_number - 1) // 6) % 3
+
+    article_orders = [
+        [1, 2, 3],
+        [2, 3, 1],
+        [3, 1, 2],
+    ]
+
+    selected_order = article_orders[group_index]
+
+    articles_by_id = {
+        int(article["id"]): article
+        for article in articles
+    }
+
+    return [
+        articles_by_id[article_id]
+        for article_id in selected_order
+        if article_id in articles_by_id
+    ]
+
 
 @app.after_request
 def add_cors_headers(response):
@@ -332,12 +365,11 @@ def experiment():
 @app.route("/api/participant/<participant_id>")
 def participant_articles(participant_id):
 
-    assigned_articles = \
-        get_articles_for_participant(participant_id)
+    ordered_articles = get_counterbalanced_articles(participant_id, ARTICLES)
 
     return jsonify({
         "participantId": participant_id,
-        "articles": assigned_articles
+        "articles": ordered_articles
     })
 
 if __name__ == "__main__":
