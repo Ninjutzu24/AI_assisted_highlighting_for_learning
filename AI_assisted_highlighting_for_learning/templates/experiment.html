@@ -591,7 +591,7 @@
   <div class="icon">✓</div>
   <h3>Session Complete</h3>
   <p>
-    You have read all three articles and completed all comprehension quizzes.<br>
+    You have read all three articles and completed all comprehension and feedback quizzes.<br>
     Thank you for participating in this experiment.
   </p>
 
@@ -615,6 +615,42 @@
 
 <script>
 let SESSION = null;
+
+const MODE_ORDERS = [
+  ["static",      "interactive", "chatbot"],
+  ["static",      "chatbot",     "interactive"],
+  ["interactive", "static",      "chatbot"],
+  ["interactive", "chatbot",     "static"],
+  ["chatbot",     "static",      "interactive"],
+  ["chatbot",     "interactive", "static"],
+];
+
+function getParticipantOrder(participantId) {
+  const digits = String(participantId).replace(/\D/g, "");
+  const numericId = parseInt(digits || "1", 10);
+
+  const safeNumericId =
+    Number.isFinite(numericId) && numericId > 0
+      ? numericId
+      : 1;
+
+  const orderIndex = (safeNumericId - 1) % MODE_ORDERS.length;
+
+  return MODE_ORDERS[orderIndex];
+}
+
+function getReadableMode(mode) {
+  if (mode === "static") return "Manual Highlighting";
+  if (mode === "interactive") return "AI Highlighting and Main Ideas Support";
+  if (mode === "chatbot") return "AI Chatbot Support";
+  return mode;
+}
+
+function getModeForTask(taskIndexZeroBased) {
+  const order = getParticipantOrder(SESSION.participantId);
+  return order[taskIndexZeroBased];
+}
+
 
 window.addEventListener("message", (event) => {
   if (event.source !== window) return;
@@ -650,7 +686,17 @@ window.addEventListener("message", (event) => {
   for (let i = 0; i < SESSION.opened.length; i++) {
     SESSION.opened[i] = i < completedCount;
   }
+  if (data.quizCompletedTaskIndex) {
+  const quizIndex = Number(data.quizCompletedTaskIndex) - 1;
 
+  if (
+    Number.isFinite(quizIndex) &&
+    quizIndex >= 0 &&
+    quizIndex < SESSION.quizDone.length
+  ) {
+    SESSION.quizDone[quizIndex] = true;
+  }
+}
   saveSession();
   renderSession();
 });
@@ -676,7 +722,13 @@ window.addEventListener("DOMContentLoaded", () => {
   if (saved) {
     try {
       SESSION = JSON.parse(saved);
+      if (!Array.isArray(SESSION.quizDone)) {
+          SESSION.quizDone = [false, false, false];
+        }
 
+        if (!Array.isArray(SESSION.susDone)) {
+          SESSION.susDone = [false, false, false];
+        }
       if (
         !SESSION ||
         !SESSION.participantId ||
@@ -755,7 +807,16 @@ async function loadArticles() {
     SESSION = {
       participantId: pid,
       articles: data.articles,
+
+      // true doar după SUS/NASA
       opened: [false, false, false],
+
+      // true după quiz
+      quizDone: [false, false, false],
+
+      // true după SUS/NASA
+      susDone: [false, false, false],
+
       demographicOpened: false
     };
     saveSession();
@@ -824,13 +885,22 @@ function renderCards() {
 
   SESSION.articles.forEach((article, i) => {
     const demographicReady = SESSION.demographicOpened === true;
-    const prevDone = i === 0 || SESSION.opened[i - 1];
-    const isDone   = SESSION.opened[i];
+   const prevDone = i === 0 || SESSION.opened[i - 1];
 
-    const canOpen  = prevDone && (i !== 0 || demographicReady);
+const quizDone = SESSION.quizDone?.[i] === true;
+const susDone  = SESSION.susDone?.[i] === true;
 
-    const isActive = !isDone && canOpen;
-    const isLocked = !isDone && !canOpen;
+const isDone = SESSION.opened[i] === true && susDone;
+
+const needsSus = quizDone && !susDone;
+
+const canOpen =
+  prevDone &&
+  !quizDone &&
+  (i !== 0 || demographicReady);
+
+const isActive = !isDone && canOpen;
+const isLocked = !isDone && !canOpen && !needsSus;
 
     if (i > 0) {
       const line = document.createElement("div");
@@ -860,8 +930,11 @@ function renderCards() {
     const status = document.createElement("div");
     status.className = "card-status" +
       (isDone ? " done" : isActive ? " active" : "");
+    
     if (isDone) {
       status.textContent = "Completed";
+    } else if (needsSus) {
+      status.textContent = "Quiz completed — complete the short feedback form";
     } else if (i === 0 && !demographicReady) {
       status.textContent = "Locked — complete the demographic questionnaire first";
     } else if (isActive) {
@@ -869,31 +942,48 @@ function renderCards() {
     } else {
       status.textContent = "Locked — complete the previous article first";
     }
-
     textBlock.appendChild(meta);
     textBlock.appendChild(title);
     textBlock.appendChild(status);
 
-    const btn = document.createElement("a");
-    btn.className   = "btn-action " +
-      (isDone ? "completed" : isLocked ? "locked-btn" : "open");
-    btn.textContent = isDone ? "Done ✓" : isLocked ? "Locked" : "Open →";
+    const btn = document.createElement(needsSus ? "button" : "a");
 
-    if (isActive && article.url) {
-      const articleUrl = new URL(article.url);
+btn.className = "btn-action " +
+  (isDone ? "completed" : isLocked ? "locked-btn" : "open");
 
-      articleUrl.searchParams.set("participantId", SESSION.participantId);
-      articleUrl.searchParams.set("articleId", String(article.id || i + 1));
-      articleUrl.searchParams.set("articleIndex", String(i + 1));
+if (isDone) {
+  btn.textContent = "Done ✓";
+} else if (needsSus) {
+  btn.textContent = "Complete Feedback →";
+} else if (isLocked) {
+  btn.textContent = "Locked";
+} else {
+  btn.textContent = "Open →";
+}
 
-      btn.href   = articleUrl.toString();
-      btn.target = "_blank";
-      btn.rel    = "noopener noreferrer";
-      btn.addEventListener("click", () => {
-      setTimeout(() => {
-        requestExtensionProgress();
-      }, 500);
-    });
+if (needsSus) {
+  btn.type = "button";
+  btn.addEventListener("click", () => {
+    openSusNasaModal(i);
+  });
+}
+
+if (isActive && article.url) {
+  const articleUrl = new URL(article.url);
+
+  articleUrl.searchParams.set("participantId", SESSION.participantId);
+  articleUrl.searchParams.set("articleId", String(article.id || i + 1));
+  articleUrl.searchParams.set("articleIndex", String(i + 1));
+
+  btn.href   = articleUrl.toString();
+  btn.target = "_blank";
+  btn.rel    = "noopener noreferrer";
+
+  btn.addEventListener("click", () => {
+    setTimeout(() => {
+      requestExtensionProgress();
+    }, 500);
+  });
 }
 
     card.appendChild(circle);
@@ -913,6 +1003,371 @@ if (demographicLink) {
     saveSession();
     renderSession();
   });
+}
+
+function getModeIcon(mode) {
+  if (mode === "static") return "✏️";
+  if (mode === "interactive") return "✨";
+  if (mode === "chatbot") return "🤖";
+  return "💬";
+}
+
+function getFriendlyModeLabel(mode) {
+  if (mode === "static") return "Manual Highlighting";
+  if (mode === "interactive") return "Main Ideas Support";
+  if (mode === "chatbot") return "AI Chat Support";
+  return "Reading Support";
+}
+
+function openSusNasaModal(taskIndex) {
+  document.getElementById("sus-nasa-modal")?.remove();
+
+  const article = SESSION.articles[taskIndex];
+  const mode = getModeForTask(taskIndex);
+
+  const modeLabel = getReadableMode(mode); // pentru salvare/export
+  const friendlyModeLabel = getFriendlyModeLabel(mode); // pentru UI
+  const modeIcon = getModeIcon(mode);
+
+  const overlay = document.createElement("div");
+  overlay.id = "sus-nasa-modal";
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.72);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Sans', Arial, sans-serif;
+    padding: 24px;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      background: #ffffff;
+      width: min(820px, 96vw);
+      max-height: 92vh;
+      overflow-y: auto;
+      border-radius: 22px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.38);
+      border: 1px solid #e5e7eb;
+    ">
+
+      <div style="
+        position: sticky;
+        top: 0;
+        background: linear-gradient(135deg, #eff6ff 0%, #ffffff 65%);
+        border-bottom: 1px solid #e5e7eb;
+        padding: 28px 34px 22px;
+        z-index: 2;
+        border-radius: 22px 22px 0 0;
+      ">
+        <div style="
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: #dbeafe;
+          color: #1d4ed8;
+          border-radius: 999px;
+          padding: 7px 13px;
+          font-size: 13px;
+          font-weight: 700;
+          margin-bottom: 14px;
+        ">
+          <span>${modeIcon}</span>
+          <span>${friendlyModeLabel}</span>
+        </div>
+
+        <h2 style="
+          margin: 0 0 8px;
+          font-family: 'IBM Plex Serif', serif;
+          font-size: 30px;
+          line-height: 1.15;
+          color: #0f172a;
+        ">
+          Quick Feedback
+        </h2>
+
+        <p style="
+          color: #64748b;
+          line-height: 1.6;
+          font-size: 15px;
+          margin: 0;
+          max-width: 680px;
+        ">
+          Please answer these short questions about the reading support mode you have just used.
+          Your feedback helps us understand how useful and comfortable this mode felt.
+        </p>
+      </div>
+
+      <form id="sus-nasa-form" novalidate style="padding: 26px 34px 32px;">
+
+        <div style="
+          background: #f8fafc;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          padding: 16px 18px;
+          margin-bottom: 22px;
+          color: #475569;
+          font-size: 14px;
+          line-height: 1.55;
+        ">
+          <strong>Scale:</strong> choose a number from 1 to 5 for each statement.
+        </div>
+
+        <h3 style="
+          margin: 0 0 14px;
+          color: #111827;
+          font-size: 18px;
+        ">
+          How did this reading mode feel?
+        </h3>
+
+        ${renderLikertQuestion("easy_to_use", "1. I found this reading support mode easy to use.", "Strongly disagree", "Strongly agree")}
+        ${renderLikertQuestion("unnecessarily_complex", "2. I thought this reading support mode was unnecessarily complex.", "Strongly disagree", "Strongly agree")}
+        ${renderLikertQuestion("confident_using", "3. I felt confident using this reading support mode.", "Strongly disagree", "Strongly agree")}
+        ${renderLikertQuestion("needed_help", "4. I needed help in order to use this reading support mode.", "Strongly disagree", "Strongly agree")}
+        ${renderLikertQuestion("well_integrated", "5. I thought the functions of this reading support mode were well integrated.", "Strongly disagree", "Strongly agree")}
+        ${renderLikertQuestion("confusing", "6. I found this reading support mode confusing.", "Strongly disagree", "Strongly agree")}
+        ${renderLikertQuestion("helped_understanding", "7. I think this reading support mode helped me understand the article.", "Strongly disagree", "Strongly agree")}
+        ${renderLikertQuestion("would_use_again", "8. I would like to use this type of reading support again for similar articles.", "Strongly disagree", "Strongly agree")}
+
+        <h3 style="
+          margin: 28px 0 14px;
+          color: #111827;
+          font-size: 18px;
+        ">
+          Task effort
+        </h3>
+
+        ${renderLikertQuestion("mental_demand", "9. How mentally demanding was this task?", "Very low", "Very high")}
+        ${renderLikertQuestion("temporal_demand", "10. How rushed did you feel during this task?", "Very low", "Very high")}
+        ${renderLikertQuestion("effort", "11. How much effort did you need to complete the task?", "Very low", "Very high")}
+        ${renderLikertQuestion("frustration", "12. How frustrated did you feel while using this mode?", "Very low", "Very high")}
+        ${renderLikertQuestion("performance", "13. How successful do you think you were in understanding the article?", "Very low", "Very high")}
+        ${renderLikertQuestion("overall_workload", "14. How demanding was the task overall?", "Very low", "Very high")}
+
+        <div style="
+          margin-top: 24px;
+          background: #f8fafc;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          padding: 18px;
+        ">
+          <label style="
+            display: block;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #111827;
+          ">
+            Optional comment
+          </label>
+
+          <textarea
+            name="comment"
+            rows="4"
+            style="
+              width: 100%;
+              padding: 13px 14px;
+              border: 1px solid #d1d5db;
+              border-radius: 12px;
+              font-family: 'IBM Plex Sans', Arial, sans-serif;
+              font-size: 15px;
+              resize: vertical;
+              outline: none;
+            "
+            placeholder="You can write anything you noticed about this reading mode..."
+          ></textarea>
+        </div>
+
+        <div style="
+          display: flex;
+          justify-content: flex-end;
+          gap: 12px;
+          margin-top: 28px;
+        ">
+          <button
+            type="submit"
+            style="
+              padding: 13px 26px;
+              background: #2563eb;
+              color: white;
+              border: none;
+              border-radius: 12px;
+              font-weight: 800;
+              font-size: 15px;
+              cursor: pointer;
+              box-shadow: 0 8px 18px rgba(37,99,235,0.24);
+            "
+          >
+            Submit Feedback →
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById("sus-nasa-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const requiredNames = [
+      "easy_to_use",
+      "unnecessarily_complex",
+      "confident_using",
+      "needed_help",
+      "well_integrated",
+      "confusing",
+      "helped_understanding",
+      "would_use_again",
+      "mental_demand",
+      "temporal_demand",
+      "effort",
+      "frustration",
+      "performance",
+      "overall_workload"
+    ];
+
+    const responses = {};
+
+    for (const name of requiredNames) {
+      const value = formData.get(name);
+
+      if (!value) {
+        alert("Please answer all feedback questions before continuing.");
+        return;
+      }
+
+      responses[name] = Number(value);
+    }
+
+    const payload = {
+      participantId: SESSION.participantId,
+      taskNumber: taskIndex + 1,
+      articleId: String(article.id || taskIndex + 1),
+      articleIndex: taskIndex + 1,
+      mode,
+      modeLabel,
+      responses,
+      comment: String(formData.get("comment") || ""),
+      submittedAt: new Date().toISOString()
+    };
+
+    try {
+      const res = await fetch("/api/save_sus_nasa", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error("Could not save feedback responses.");
+      }
+
+      SESSION.susDone[taskIndex] = true;
+      SESSION.opened[taskIndex] = true;
+
+      saveSession();
+
+      window.postMessage({
+        type: "AI_READING_SUS_NASA_SUBMITTED",
+        participantId: SESSION.participantId,
+        taskIndex: taskIndex + 1
+      }, "*");
+
+      overlay.remove();
+      renderSession();
+
+      setTimeout(() => {
+        requestExtensionProgress();
+      }, 300);
+
+    } catch (err) {
+      console.error(err);
+      alert("Could not save feedback responses. Please try again.");
+    }
+  });
+}
+
+function renderLikertQuestion(name, label, leftLabel, rightLabel) {
+  return `
+    <div style="
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+    ">
+      <div style="
+        font-weight: 700;
+        font-size: 15.5px;
+        line-height: 1.45;
+        color: #111827;
+        margin-bottom: 16px;
+      ">
+        ${label}
+      </div>
+
+      <div style="
+        display: grid;
+        grid-template-columns: 120px repeat(5, 1fr) 120px;
+        align-items: center;
+        gap: 10px;
+      ">
+        <span style="
+          font-size: 12px;
+          color: #64748b;
+          line-height: 1.3;
+        ">
+          ${leftLabel}
+        </span>
+
+        ${[1,2,3,4,5].map(value => `
+          <label style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 7px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            cursor: pointer;
+            padding: 8px 4px;
+            border-radius: 10px;
+          ">
+            <input
+              type="radio"
+              name="${name}"
+              value="${value}"
+              style="
+                width: 18px;
+                height: 18px;
+                cursor: pointer;
+              "
+            >
+            <span>${value}</span>
+          </label>
+        `).join("")}
+
+        <span style="
+          font-size: 12px;
+          color: #64748b;
+          line-height: 1.3;
+          text-align: right;
+        ">
+          ${rightLabel}
+        </span>
+      </div>
+    </div>
+  `;
 }
 
 </script>

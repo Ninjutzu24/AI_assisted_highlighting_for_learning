@@ -12,6 +12,7 @@ const MANUAL_COLORS = [
 const STORAGE_KEY = () => `ai-manual-hl::${window.location.href}`;
 
 let quizUserAnswers = {};
+let quizSubmitted = false;
 
 const TASK_TIME_LIMIT_SECONDS = 10 *60 ;
 
@@ -122,14 +123,81 @@ window.addEventListener("message", async (event) => {
     return;
   }
 
-  window.postMessage({
+ window.postMessage({
     type: "AI_READING_EXTENSION_PROGRESS",
     participantId: progress.participantId,
-    completedCount: progress.completedCount,
-    articleIndex: progress.articleIndex
+    completedCount: progress.completedCount || 0,
+    articleIndex: progress.articleIndex,
+    quizCompletedTaskIndex: progress.quizCompletedTaskIndex || null,
+    susNasaPending: !!progress.susNasaPending
   }, "*");
 });
 
+window.addEventListener("message", async (event) => {
+  if (event.source !== window) return;
+
+  const message = event.data;
+
+  if (
+    !message ||
+    message.type !== "AI_READING_SUS_NASA_SUBMITTED"
+  ) {
+    return;
+  }
+
+  const allowedHost =
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "localhost";
+
+  if (!allowedHost) {
+    return;
+  }
+
+  const result = await chrome.storage.local.get("studyState");
+  const studyState = result.studyState;
+
+  if (!studyState) {
+    return;
+  }
+
+  if (
+    String(studyState.participantId) !==
+    String(message.participantId)
+  ) {
+    return;
+  }
+
+  const completedTaskIndex = Number(message.taskIndex);
+
+  if (
+    !Number.isFinite(completedTaskIndex) ||
+    completedTaskIndex < 1 ||
+    completedTaskIndex > studyState.modeOrder.length
+  ) {
+    return;
+  }
+
+  studyState.currentStep = Math.min(
+    completedTaskIndex,
+    studyState.modeOrder.length
+  );
+
+  await chrome.storage.local.set({
+    studyState,
+    experimentProgress: {
+      participantId: studyState.participantId,
+      completedCount: completedTaskIndex,
+      articleIndex: completedTaskIndex,
+      susNasaPending: false,
+      susNasaCompletedAt: Date.now()
+    }
+  });
+
+  console.log(
+    "[SUS/NASA] Submitted. Current step is now:",
+    studyState.currentStep
+  );
+});
 
 function startTaskMetrics(mode) {
   stopTaskTimer();
@@ -2235,6 +2303,7 @@ async function generateQuiz() {
     closeAllReadingSupportsBeforeQuiz();
 
     quizUserAnswers = {};
+    quizSubmitted = false;
 
     const normalizedQuiz =
       convertCorrectAnswerToLetterIfNeeded(data.quiz);
@@ -2311,27 +2380,31 @@ function renderQuizPopup(quiz) {
   popup.innerHTML = html;
   document.body.appendChild(popup);
 
-  // ── Close quiz → trece la modul următor ──────────────────
   document.getElementById("close-quiz-popup").onclick = async () => {
   quizIsOpen = false;
+
   const result = await chrome.storage.local.get("studyState");
   const studyState = result.studyState;
+
   if (studyState) {
+    const taskIndex = studyState.currentStep + 1;
+
     await chrome.storage.local.set({
       experimentProgress: {
         participantId: studyState.participantId,
-        completedCount: Math.min(
-          studyState.currentStep + 1,
-          studyState.modeOrder.length
-        ),
-        articleIndex: studyState.currentStep + 1,
-        completedAt: Date.now()
+
+        // IMPORTANT:
+        // completedCount NU mai crește aici.
+        // Crește doar după SUS/NASA.
+        completedCount: studyState.currentStep,
+
+        quizCompletedTaskIndex: taskIndex,
+        susNasaPending: true,
+        articleIndex: taskIndex,
+        quizCompletedAt: Date.now()
       }
     });
   }
-  const isLastStep =
-    studyState &&
-    studyState.currentStep >= studyState.modeOrder.length - 1;
 
   popup.remove();
   removeFinishButton();
@@ -2340,15 +2413,8 @@ function renderQuizPopup(quiz) {
   clearHighlights();
   removeSidePanel();
 
-  chrome.runtime.sendMessage({ action: "quizFinished" }, (resp) => {
-    console.log("[Content] quizFinished response:", resp);
-
-    if (!isLastStep) {
-      showTaskCompletedPopup();
-    }
-  });
+  showTaskCompletedPopup();
 };
-
   document.getElementById("submit-quiz-btn").onclick = submitQuiz;
   addQuizLogic();
 }
@@ -2356,6 +2422,7 @@ function renderQuizPopup(quiz) {
 function addQuizLogic() {
   document.querySelectorAll(".quiz-option").forEach(btn => {
     btn.onclick = () => {
+      if (quizSubmitted) return;
       const selected = btn.dataset.option;
       const correct  = btn.dataset.correct;
       const qClass   = [...btn.classList].find(c => c.startsWith("question-"));
@@ -2377,6 +2444,8 @@ function addQuizLogic() {
 }
 
 function submitQuiz() {
+  if (quizSubmitted) return;
+      quizSubmitted = true;
   const allButtons = document.querySelectorAll(".quiz-option");
   const questions  = {};
   allButtons.forEach(btn => {
@@ -2396,6 +2465,12 @@ function submitQuiz() {
 
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
   saveQuizResult(correct, total, pct);
+    allButtons.forEach(btn => {
+    btn.disabled = true;
+    btn.style.pointerEvents = "none";
+    btn.style.cursor = "not-allowed";
+    btn.style.opacity = "0.75";
+  });
   stopTaskTimer();
   const feedback = pct >= 80 ? "Excellent comprehension! 🎉" : pct >= 50 ? "Good understanding. 👍" : "Needs more review. 📚";
 
@@ -2471,7 +2546,7 @@ function showTaskCompletedPopup() {
         font-size:15px;
       ">
         You have completed this article and its quiz.<br>
-        Please return to the main experiment page and open the next article.
+        Please return to the main experiment page and complete the short feedback questionnaire for this reading mode.
       </p>
 
       <button id="close-task-completed-popup" style="

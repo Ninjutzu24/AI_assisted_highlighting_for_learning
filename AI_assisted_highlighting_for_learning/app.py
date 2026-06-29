@@ -311,6 +311,53 @@ def save_result():
         "success": True
     })
 
+
+@app.route("/api/save_sus_nasa", methods=["POST", "OPTIONS"])
+def save_sus_nasa():
+
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    data = request.get_json(silent=True) or {}
+
+    sus_entry = {
+        "participantId": data.get("participantId"),
+        "taskNumber": data.get("taskNumber"),
+        "articleId": data.get("articleId"),
+        "articleIndex": data.get("articleIndex"),
+        "mode": data.get("mode"),
+        "modeLabel": data.get("modeLabel"),
+        "responses": data.get("responses", {}),
+        "comment": data.get("comment", ""),
+        "submittedAt": data.get("submittedAt")
+    }
+
+    sus_file = "sus_nasa_results.json"
+
+    if os.path.exists(sus_file):
+        try:
+            with open(sus_file, "r", encoding="utf-8") as f:
+                sus_results = json.load(f)
+        except:
+            sus_results = []
+    else:
+        sus_results = []
+
+    sus_results.append(sus_entry)
+
+    with open(sus_file, "w", encoding="utf-8") as f:
+        json.dump(sus_results, f, indent=4, ensure_ascii=False)
+
+    try:
+        export_results_to_excel()
+    except Exception as e:
+        print("[Excel Export] Error after SUS/NASA save:", e)
+
+    return jsonify({
+        "success": True
+    })
+
+    
 @app.route("/api/chat", methods=["POST", "OPTIONS"])
 def api_chat():
 
