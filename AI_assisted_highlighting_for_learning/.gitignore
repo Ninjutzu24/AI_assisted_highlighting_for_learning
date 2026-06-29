@@ -5,6 +5,7 @@ __pycache__/
 *.pyc
 
 results.json
+sus_nasa_results.json
 results.xlsx
 *.xlsx
 

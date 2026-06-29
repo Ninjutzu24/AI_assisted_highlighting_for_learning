@@ -1,156 +1,156 @@
 {
   "1": [
     {
-      "question": "Where are Webb's scientific instruments housed?",
+      "question": "Where are Webb's scientific instruments located?",
       "options": [
         "Behind the primary mirror in a separate external unit",
-        "Inside the Integrated Science Instrument Module",
+        "Within the Integrated Science Instrument Module.",
         "Inside the sunshield layers that block heat from the Sun",
         "On a ground station that receives Webb's observations"
       ],
-      "correct_answer": "Inside the Integrated Science Instrument Module"
+      "correct_answer": "Within the Integrated Science Instrument Module."
     },
     {
       "question": "Why are Webb's scientific instruments important?",
       "options": [
         "They keep the telescope pointed only toward nearby planets",
         "They replace the telescope mirrors during long observations",
-        "They record and analyze light for scientific observations",
+        "They record and analyze light for scientific observations.",
         "They store fuel and control Webb's launch sequence"
       ],
-      "correct_answer": "They record and analyze light for scientific observations"
+      "correct_answer": "They record and analyze light for scientific observations."
     },
     {
       "question": "Which of the following is one of Webb's four main scientific instruments?",
       "options": [
-        "NIRCam",
+        "NIRCam.",
         "SolarNet Imaging Module",
         "Deep Field Navigation Camera",
         "Guided Planet Mapper"
       ],
-      "correct_answer": "NIRCam"
+      "correct_answer": "NIRCam."
     },
     {
-      "question": "What type of light does Webb mainly observe?",
+      "question": "What kind of light is Webb able to observe?",
       "options": [
         "Mostly radio waves from nearby satellites",
         "Only visible light from planets and stars",
         "Mainly ultraviolet light from hot stars",
-        "Infrared light"
+        "Infrared light."
       ],
-      "correct_answer": "Infrared light"
+      "correct_answer": "Infrared light."
     },
     {
       "question": "What happens to light during an observation with Webb?",
       "options": [
         "It is stored in the sunshield before being sent to Earth",
-        "It is collected by the mirrors and directed into scientific instruments",
+        "It is gathered by the mirrors and analyzed with scientific instruments.",
         "It is converted into sound before any measurement is made",
         "It is reflected away before reaching the instrument module"
       ],
-      "correct_answer": "It is collected by the mirrors and directed into scientific instruments"
+      "correct_answer": "It is gathered by the mirrors and analyzed with scientific instruments."
     },
     {
-      "question": "Why does the article compare Webb's instruments to a Swiss army knife?",
+      "question": "Why does the author describe Webb's instruments as Swiss army knife?",
       "options": [
         "Because the instruments are used mainly for physical repairs",
         "Because each instrument has only one simple observation task",
-        "Because each instrument has multiple specialized observing modes",
+        "Because each instrument has several specialized observing modes.",
         "Because the telescope carries backup tools for emergencies"
       ],
-      "correct_answer": "Because each instrument has multiple specialized observing modes"
+      "correct_answer": "Because each instrument has several specialized observing modes."
     },
     {
-      "question": "What do cameras on Webb's instruments do?",
+      "question": "What do cameras in Webb's instruments do?",
       "options": [
         "They block bright stars before light reaches the mirrors",
         "They convert every observation into a wavelength graph",
         "They control the telescope's position during launch",
-        "They capture two-dimensional images of regions of space"
+        "Capture two-dimensional images of regions of space."
       ],
-      "correct_answer": "They capture two-dimensional images of regions of space"
+      "correct_answer": "Capture two-dimensional images of regions of space."
     },
     {
-      "question": "What is the purpose of a spectrograph?",
+      "question": "What is a spectrograph?",
       "options": [
-        "To spread light into a spectrum so different wavelengths can be measured",
+        "Tool for spreading light into a spectrum in order to measure various wavelengths.",
         "To keep the telescope cold by filtering heat from the Sun",
         "To take standard two-dimensional pictures of space objects",
         "To lock Webb onto guide stars during every observation"
       ],
-      "correct_answer": "To spread light into a spectrum so different wavelengths can be measured"
+      "correct_answer": "Tool for spreading light into a spectrum in order to measure various wavelengths."
     },
     {
-      "question": "What do coronagraphs help Webb observe?",
+      "question": "What do coronagraphs allow Webb to observe?",
       "options": [
         "The internal temperature of Webb's science module",
         "The exact launch path used to reach space",
-        "Faint planets or debris disks near bright stars",
+        "Faint planets or debris disks around bright stars.",
         "Only large galaxies that fill the full field of view"
       ],
-      "correct_answer": "Faint planets or debris disks near bright stars"
+      "correct_answer": "Faint planets or debris disks around bright stars."
     },
     {
       "question": "What do detectors do in Webb's instruments?",
       "options": [
         "They physically clean dust from the primary mirror",
-        "They absorb light and convert it into digital data",
+        "Absorb light and convert it into digital data.",
         "They move the telescope between different orbits",
         "They create artificial light for calibration images"
       ],
-      "correct_answer": "They absorb light and convert it into digital data"
+      "correct_answer": "Absorb light and convert it into digital data."
     }
   ],
   "2": [
     {
-      "question": "What is the main purpose of Berkeley Lab's QIS cluster tool?",
+      "question": "What is the primary function of the QIS cluster tool at Berkeley Lab?",
       "options": [
         "To automate food preparation for researchers in the lab",
         "To assemble ordinary desktop computers at high speed",
-        "To help researchers develop better quantum computer components",
+        "Help researchers develop quantum computer components.",
         "To replace material experiments with software simulations only"
       ],
-      "correct_answer": "To help researchers develop better quantum computer components"
+      "correct_answer": "Help researchers develop quantum computer components."
     },
     {
       "question": "Where is the QIS cluster tool located?",
       "options": [
-        "At the Molecular Foundry",
+        "At the Molecular Foundry.",
         "Inside a commercial smartphone factory",
         "On the International Space Station",
         "At a public demonstration restaurant"
       ],
-      "correct_answer": "At the Molecular Foundry"
+      "correct_answer": "At the Molecular Foundry."
     },
     {
-      "question": "Why are qubits difficult to build reliably?",
+      "question": "Why are qubits hard to make?",
       "options": [
         "They work best when touched and adjusted by hand",
         "They are usually made from ordinary plastic parts",
         "They do not require controlled materials or surfaces",
-        "They are extremely sensitive to their environment and small imperfections"
+        "They are extremely sensitive to the environment and any defects."
       ],
-      "correct_answer": "They are extremely sensitive to their environment and small imperfections"
+      "correct_answer": "They are extremely sensitive to the environment and any defects."
     },
     {
-      "question": "What advantage does the cluster tool provide by combining fabrication and analysis in one vacuum system?",
+      "question": "What is the advantage of QIS cluster tool in that it combines fabrication and analysis in one vacuum system?",
       "options": [
         "It removes the need to measure materials after fabrication",
-        "It reduces contamination and makes the process faster and more standardized",
+        "Reduces contamination and makes the process faster and more standard.",
         "It allows quantum devices to be fabricated outdoors",
         "It makes each qubit larger and easier to inspect visually"
       ],
-      "correct_answer": "It reduces contamination and makes the process faster and more standardized"
+      "correct_answer": "Reduces contamination and makes the process faster and more standard."
     },
     {
-      "question": "What does the robotic arm move inside the cluster tool?",
+      "question": "What does the robotic arm move in the QIS cluster tool?",
       "options": [
-        "An 8-inch wafer",
+        "An 8-inch wafer.",
         "A finished laptop",
         "A pizza tray",
         "A telescope lens"
       ],
-      "correct_answer": "An 8-inch wafer"
+      "correct_answer": "An 8-inch wafer."
     },
     {
       "question": "What is a Josephson junction?",
@@ -158,101 +158,101 @@
         "A camera system used to guide a space telescope",
         "A software tool used to organize experimental data",
         "A standard battery component used in mobile phones",
-        "A tiny structure made from two superconductors separated by an ultrathin insulating layer"
+        "Very tiny element consisting of two superconductors with an ultrathin insulator between them."
       ],
-      "correct_answer": "A tiny structure made from two superconductors separated by an ultrathin insulating layer"
+      "correct_answer": "Very tiny element consisting of two superconductors with an ultrathin insulator between them."
     },
     {
-      "question": "Why are Josephson junctions important for quantum computing?",
+      "question": "Why are Josephson junctions needed in quantum computing research?",
       "options": [
         "They are used only to create images of material surfaces",
         "They make classical computers run ordinary programs faster",
-        "They are used to form circuits that can act as qubits",
+        "To create circuits that could serve as qubits.",
         "They replace the need for low-temperature experiments"
       ],
-      "correct_answer": "They are used to form circuits that can act as qubits"
+      "correct_answer": "To create circuits that could serve as qubits."
     },
     {
-      "question": "How can artificial intelligence help in this research?",
+      "question": "What is the role of artificial intelligence in this research?",
       "options": [
         "It can fabricate qubits without any physical materials",
-        "It can learn from fabrication data to suggest better materials and production methods",
+        "Artificial intelligence can learn from fabrication data and make suggestions about materials and production techniques.",
         "It can turn quantum computers into ordinary calculators",
         "It can remove the need to run experiments or analyze samples"
       ],
-      "correct_answer": "It can learn from fabrication data to suggest better materials and production methods"
+      "correct_answer": "Artificial intelligence can learn from fabrication data and make suggestions about materials and production techniques."
     },
     {
-      "question": "What kinds of tools are used to analyze materials in the cluster tool?",
+      "question": "What kinds of analytical tools are used in the QIS cluster tool?",
       "options": [
-        "Electrons, x-rays, lasers, and infrared light",
+        "Electrons, x-rays, lasers, and infrared light.",
         "Only a standard phone camera and room lighting",
         "Kitchen scales, thermometers, and pressure gauges",
         "Only visual inspection by researchers through glass"
       ],
-      "correct_answer": "Electrons, x-rays, lasers, and infrared light"
+      "correct_answer": "Electrons, x-rays, lasers, and infrared light."
     },
     {
-      "question": "Besides quantum computers, what other use could these sensitive quantum devices have?",
+      "question": "What else, aside from quantum computers, could these sensitive quantum devices be used for?",
       "options": [
         "They could replace all internet cables in buildings",
         "They could be used only for gaming graphics",
-        "They could be used as very sensitive sensors",
+        "As sensors.",
         "They could function as ordinary clothing materials"
       ],
-      "correct_answer": "They could be used as very sensitive sensors"
+      "correct_answer": "As sensors."
     }
   ],
   "3": [
     {
-      "question": "What have MIT researchers developed in the article?",
+      "question": "What have been developed by MIT researchers?",
       "options": [
         "A flexible telescope mirror designed for clothing",
         "A robot system that automatically cooks food",
         "A standard laptop that can be sewn onto fabric",
-        "An autonomous programmable computer in the form of an elastic fiber"
+        "Autonomous programmable computer as an elastic fiber."
       ],
-      "correct_answer": "An autonomous programmable computer in the form of an elastic fiber"
+      "correct_answer": "Autonomous programmable computer as an elastic fiber."
     },
     {
-      "question": "What could the fiber computer monitor?",
+      "question": "What can the fiber computer monitor?",
       "options": [
         "The price of clothing in online shops",
-        "Health conditions and physical activity",
+        "Health conditions and physical activity.",
         "The temperature of distant stars",
         "Only internet browsing history"
       ],
-      "correct_answer": "Health conditions and physical activity"
+      "correct_answer": "Health conditions and physical activity."
     },
     {
-      "question": "Why can smart fabrics have an advantage over traditional wearables?",
+      "question": "Why could smart fabrics be advantageous compared to regular wearables?",
       "options": [
         "They never need sensors, batteries, or communication systems",
         "They work only when placed flat on a laboratory desk",
-        "They are in contact with larger areas of the body close to vital organs",
+        "They are in contact with larger area of the body close to vital organs.",
         "They replace all medical expertise with automatic decisions"
       ],
-      "correct_answer": "They are in contact with larger areas of the body close to vital organs"
+      "correct_answer": "They are in contact with larger area of the body close to vital organs."
     },
     {
-      "question": "Which components are included in the fiber computer?",
+      "question": "What elements does the fiber computer consist of?",
       "options": [
-        "Sensors, a microcontroller, memory, Bluetooth modules, optical communications, and a battery",
+        "Sensors, microcontroller, memory, Bluetooth modules, optical communication, and battery.",
         "A telescope mirror, a rocket engine, and navigation cameras",
         "A keyboard, a mouse, a display, and a desktop processor",
         "Only cotton threads, plastic buttons, and decorative fibers"
       ],
-      "correct_answer": "Sensors, a microcontroller, memory, Bluetooth modules, optical communications, and a battery"
+      "correct_answer": "Sensors, microcontroller, memory, Bluetooth modules, optical communication, and battery."
     },
     {
-      "question": "How many fiber computers were added to the top and leggings in the experiment?",
+      "question": "How many fiber computers were embedded into the top and leggings in the experiment?",
       "options": [
         "Twenty-five",
-        "Four",
+        "Four.",
         "Zero",
         "One hundred"
       ],
-      "correct_answer": "Four"
+      "correct_answer": "Four."
     },
     {
       "question": "What did each independently programmable fiber computer do in the experiment?",
@@ -260,49 +260,49 @@
         "It printed images directly onto the surface of the fabric",
         "It controlled a space telescope during a test observation",
         "It sent automatic messages to social media platforms",
-        "It ran a machine-learning model to recognize exercises performed by the wearer"
+        "It ran machine-learning model to recognize exercises performed by the wearer."
       ],
-      "correct_answer": "It ran a machine-learning model to recognize exercises performed by the wearer"
+      "correct_answer": "It ran machine-learning model to recognize exercises performed by the wearer."
     },
     {
-      "question": "What happened when the individual fiber computers communicated with each other?",
+      "question": "What happened when fiber computers communicated with each other?",
       "options": [
-        "Their collective accuracy increased to nearly 95 percent",
+        "Their collective accuracy increased up to 95 percent.",
         "They stopped functioning and became ordinary threads",
         "They erased the activity data stored in the clothing",
         "They required a large external computer to restart"
       ],
-      "correct_answer": "Their collective accuracy increased to nearly 95 percent"
+      "correct_answer": "Their collective accuracy increased up to 95 percent."
     },
     {
-      "question": "What makes the clothing practical for everyday use, according to the article?",
+      "question": "What makes the fiber computer clothing practical?",
       "options": [
         "It required a large external computer to operate",
         "It could only be used once before being discarded",
-        "It was comfortable, machine washable, and nearly imperceptible to the wearer",
+        "It was comfortable, machine washable, and nearly undetectable.",
         "It was rigid enough to prevent movement during exercise"
       ],
-      "correct_answer": "It was comfortable, machine washable, and nearly imperceptible to the wearer"
+      "correct_answer": "It was comfortable, machine washable, and nearly undetectable."
     },
     {
-      "question": "What real-world test is mentioned for the fiber computer garments?",
+      "question": "What real-world test is conducted for fiber computer garments?",
       "options": [
         "A mission to land a spacecraft on Mars",
         "A cooking competition using robotic clothing",
         "A race between autonomous cars and wearable sensors",
-        "A monthlong winter research mission to the Arctic"
+        "Month-long winter research mission to the Arctic."
       ],
-      "correct_answer": "A monthlong winter research mission to the Arctic"
+      "correct_answer": "Month-long winter research mission to the Arctic."
     },
     {
-      "question": "What is the broader idea behind fiber computers in clothing?",
+      "question": "What is the overall idea behind fiber computers in clothing?",
       "options": [
         "Computers should be removed from wearable technology",
-        "Everyday apparel could capture, analyze, store, and communicate useful health and activity information",
+        "Every-day apparel could gather, analyze, store, and communicate health and activity information.",
         "Clothes should remain decorative and avoid functional sensing",
         "Machine learning cannot operate inside fabric-based systems"
       ],
-      "correct_answer": "Everyday apparel could capture, analyze, store, and communicate useful health and activity information"
+      "correct_answer": "Every-day apparel could gather, analyze, store, and communicate health and activity information."
     }
   ]
 }
