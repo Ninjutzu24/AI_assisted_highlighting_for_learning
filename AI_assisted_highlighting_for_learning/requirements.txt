@@ -6,3 +6,4 @@ langdetect
 gunicorn
 openai
 openpyxl
+python-dotenv
