@@ -34,23 +34,13 @@ py -m venv .venv
 py -m pip install -r requirements.txt
 
 
-### 5. Create the environment file
-
-Before running the application, create a file named .env in the root folder of the project.
-
-Inside this file, add your API key:
-
-OPENAI_API_KEY=your_api_key_here
-
-Do not upload the .env file to GitLab. The .env file is ignored through .gitignore because it contains private credentials.
-
-### 6. Run the Flask server
+### 5. Run the Flask server
 
 
 py app.py
 
 
-### 7. Open the application
+### 6. Open the application
 
 After starting the server, open:
 

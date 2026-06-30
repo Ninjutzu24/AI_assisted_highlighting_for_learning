@@ -328,7 +328,6 @@ def save_sus_nasa():
         "mode": data.get("mode"),
         "modeLabel": data.get("modeLabel"),
         "responses": data.get("responses", {}),
-        "comment": data.get("comment", ""),
         "submittedAt": data.get("submittedAt")
     }
 
@@ -393,7 +392,15 @@ ARTICLE TEXT:
 User question:
 {question}
 
-Answer clearly and simply. If the user asks about an image or figure, explain it using the IMAGE AND FIGURE CONTEXT when available.
+Answer clearly and simply.
+
+Important language rule:
+Detect the language used in the user's question and answer in the same language.
+Do not default to English just because the article, interface, or context is in English.
+If the user's question mixes multiple languages, answer mainly in the language most used by the user.
+If the language cannot be identified because the question is too short or ambiguous, answer in English.
+
+If the user asks about an image or figure, explain it using the IMAGE AND FIGURE CONTEXT when available.
 """
 
     answer = ask_chatbot(

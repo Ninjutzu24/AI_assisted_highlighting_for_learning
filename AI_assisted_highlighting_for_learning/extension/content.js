@@ -2383,28 +2383,91 @@ function renderQuizPopup(quiz) {
   document.getElementById("close-quiz-popup").onclick = async () => {
   quizIsOpen = false;
 
-  const result = await chrome.storage.local.get("studyState");
-  const studyState = result.studyState;
+  const params = new URLSearchParams(window.location.search);
 
-  if (studyState) {
-    const taskIndex = studyState.currentStep + 1;
+  const fallbackParticipantId =
+    params.get("participantId") || "";
 
-    await chrome.storage.local.set({
-      experimentProgress: {
-        participantId: studyState.participantId,
+  const fallbackArticleIndex =
+    Number(
+      params.get("articleIndex") ||
+      params.get("articleId") ||
+      1
+    );
 
-        // IMPORTANT:
-        // completedCount NU mai crește aici.
-        // Crește doar după SUS/NASA.
-        completedCount: studyState.currentStep,
+  const modeOrders = [
+    ["static",      "interactive", "chatbot"],
+    ["static",      "chatbot",     "interactive"],
+    ["interactive", "static",      "chatbot"],
+    ["interactive", "chatbot",     "static"],
+    ["chatbot",     "static",      "interactive"],
+    ["chatbot",     "interactive", "static"],
+  ];
 
-        quizCompletedTaskIndex: taskIndex,
-        susNasaPending: true,
-        articleIndex: taskIndex,
-        quizCompletedAt: Date.now()
-      }
-    });
+  function getFallbackModeOrder(participantId) {
+    const digits = String(participantId).replace(/\D/g, "");
+    const numericId = parseInt(digits || "1", 10);
+
+    const safeNumericId =
+      Number.isFinite(numericId) && numericId > 0
+        ? numericId
+        : 1;
+
+    return modeOrders[(safeNumericId - 1) % modeOrders.length];
   }
+
+  const result =
+    await chrome.storage.local.get("studyState");
+
+  const oldStudyState =
+    result.studyState || {};
+
+  const participantId =
+    oldStudyState.participantId ||
+    fallbackParticipantId;
+
+  if (!participantId) {
+    alert("Could not identify the participant ID. Please return to the experiment page and reopen the article.");
+    return;
+  }
+
+  const taskIndex =
+    Number.isFinite(fallbackArticleIndex) &&
+    fallbackArticleIndex >= 1
+      ? fallbackArticleIndex
+      : Number(oldStudyState.currentStep || 0) + 1;
+
+  const currentStep =
+    Math.max(0, taskIndex - 1);
+
+  const modeOrder =
+    Array.isArray(oldStudyState.modeOrder) &&
+    oldStudyState.modeOrder.length
+      ? oldStudyState.modeOrder
+      : getFallbackModeOrder(participantId);
+
+  const studyState = {
+    ...oldStudyState,
+    participantId,
+    currentStep,
+    modeOrder
+  };
+
+  await chrome.storage.local.set({
+    studyState,
+    experimentProgress: {
+      participantId,
+
+      // Quiz-ul e făcut, dar articolul NU devine complet
+      // până când participantul nu face feedback-ul.
+      completedCount: currentStep,
+
+      quizCompletedTaskIndex: taskIndex,
+      susNasaPending: true,
+      articleIndex: taskIndex,
+      quizCompletedAt: Date.now()
+    }
+  });
 
   popup.remove();
   removeFinishButton();
@@ -2414,7 +2477,8 @@ function renderQuizPopup(quiz) {
   removeSidePanel();
 
   showTaskCompletedPopup();
-};
+}; 
+
   document.getElementById("submit-quiz-btn").onclick = submitQuiz;
   addQuizLogic();
 }
@@ -2423,22 +2487,26 @@ function addQuizLogic() {
   document.querySelectorAll(".quiz-option").forEach(btn => {
     btn.onclick = () => {
       if (quizSubmitted) return;
+
       const selected = btn.dataset.option;
-      const correct  = btn.dataset.correct;
-      const qClass   = [...btn.classList].find(c => c.startsWith("question-"));
+      const qClass = [...btn.classList].find(c => c.startsWith("question-"));
+
       if (!qClass) return;
-      const qIndex   = qClass.split("-")[1];
-      const allBtns  = document.querySelectorAll(`.${qClass}`);
-      allBtns.forEach(b => { b.disabled = true; });
+
+      const qIndex = qClass.split("-")[1];
+      const allBtns = document.querySelectorAll(`.${qClass}`);
+
       quizUserAnswers[qIndex] = selected;
-      if (selected === correct) {
-        btn.style.background = "#16a34a"; btn.style.color = "white";
-      } else {
-        btn.style.background = "#dc2626"; btn.style.color = "white";
-        allBtns.forEach(b => {
-          if (b.dataset.option === correct) { b.style.background = "#16a34a"; b.style.color = "white"; }
-        });
-      }
+
+      allBtns.forEach(b => {
+        b.style.background = "#f9f9f9";
+        b.style.color = "#111827";
+        b.style.border = "1px solid #ddd";
+      });
+
+      btn.style.background = "#dbeafe";
+      btn.style.color = "#111827";
+      btn.style.border = "2px solid #2563eb";
     };
   });
 }
@@ -2472,18 +2540,30 @@ function submitQuiz() {
     btn.style.opacity = "0.75";
   });
   stopTaskTimer();
-  const feedback = pct >= 80 ? "Excellent comprehension! 🎉" : pct >= 50 ? "Good understanding. 👍" : "Needs more review. 📚";
+  
 
-  const resultDiv = document.getElementById("quiz-result");
-  if (resultDiv) {
-    resultDiv.innerHTML = `
-      <div style="background:#f1f5f9;border-radius:8px;padding:16px;text-align:center;font-size:16px;">
-        <strong>Score: ${correct}/${total} — ${pct}%</strong><br>
-        <span style="color:#555;">${feedback}</span>
-      </div>
-    `;
-    resultDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
+const resultDiv = document.getElementById("quiz-result");
+
+if (resultDiv) {
+  resultDiv.innerHTML = `
+    <div style="
+      background:#f1f5f9;
+      border-radius:8px;
+      padding:16px;
+      text-align:center;
+      font-size:16px;
+      color:#111827;
+    ">
+      <strong>Your answers have been submitted.</strong><br>
+      <span style="color:#555;">Please continue to the next step.</span>
+    </div>
+  `;
+
+  resultDiv.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+  });
+}
 
   document.getElementById("submit-quiz-btn").disabled = true;
 

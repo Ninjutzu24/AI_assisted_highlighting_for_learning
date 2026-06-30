@@ -651,63 +651,110 @@ function getModeForTask(taskIndexZeroBased) {
   return order[taskIndexZeroBased];
 }
 
-
 window.addEventListener("message", (event) => {
-  if (event.source !== window) return;
+    if (event.source !== window) return;
 
-  const data = event.data || {};
+    const data = event.data || {};
 
-  if (data.type !== "AI_READING_EXTENSION_PROGRESS") {
-    return;
-  }
+    if (data.type !== "AI_READING_EXTENSION_PROGRESS") {
+      return;
+    }
 
-  if (!SESSION) {
-    return;
-  }
+    if (!SESSION) {
+      return;
+    }
 
-  if (
-    String(data.participantId || "") !==
-    String(SESSION.participantId || "")
-  ) {
-    return;
-  }
+    if (
+      String(data.participantId || "") !==
+      String(SESSION.participantId || "")
+    ) {
+      return;
+    }
 
-  const completedCount =
-    Number(data.completedCount || 0);
+    const beforeState = JSON.stringify({
+      opened: SESSION.opened,
+      quizDone: SESSION.quizDone,
+      susDone: SESSION.susDone
+    });
 
-  if (
-    !Number.isFinite(completedCount) ||
-    completedCount < 0 ||
-    completedCount > 3
-  ) {
-    return;
-  }
+    const completedCount = Number(data.completedCount || 0);
 
-  for (let i = 0; i < SESSION.opened.length; i++) {
-    SESSION.opened[i] = i < completedCount;
-  }
-  if (data.quizCompletedTaskIndex) {
-  const quizIndex = Number(data.quizCompletedTaskIndex) - 1;
+    if (
+      !Number.isFinite(completedCount) ||
+      completedCount < 0 ||
+      completedCount > 3
+    ) {
+      return;
+    }
 
-  if (
-    Number.isFinite(quizIndex) &&
-    quizIndex >= 0 &&
-    quizIndex < SESSION.quizDone.length
-  ) {
-    SESSION.quizDone[quizIndex] = true;
-  }
-}
-  saveSession();
-  renderSession();
+    for (let i = 0; i < SESSION.opened.length; i++) {
+      if (i < completedCount) {
+        SESSION.opened[i] = true;
+        SESSION.quizDone[i] = true;
+        SESSION.susDone[i] = true;
+      }
+    }
+
+    const pendingTaskNumber = Number(
+      data.quizCompletedTaskIndex ||
+      (
+        data.susNasaPending
+          ? data.articleIndex
+          : 0
+      )
+    );
+
+    if (
+      Number.isFinite(pendingTaskNumber) &&
+      pendingTaskNumber >= 1 &&
+      pendingTaskNumber <= SESSION.quizDone.length
+    ) {
+      const quizIndex = pendingTaskNumber - 1;
+
+      SESSION.quizDone[quizIndex] = true;
+
+      if (SESSION.susDone[quizIndex] !== true) {
+        SESSION.opened[quizIndex] = false;
+      }
+    }
+
+    const afterState = JSON.stringify({
+      opened: SESSION.opened,
+      quizDone: SESSION.quizDone,
+      susDone: SESSION.susDone
+    });
+
+    if (beforeState === afterState) {
+      return;
+    }
+
+    saveSession();
+    renderSession();
+
+    console.log("[MAIN PAGE] Extension progress received:", data, SESSION);
 });
 
 function requestExtensionProgress() {
-  if (!SESSION) return;
+    if (!SESSION) return;
 
-  window.postMessage({
-    type: "AI_READING_REQUEST_EXTENSION_PROGRESS",
-    participantId: SESSION.participantId
-  }, "*");
+    const message = {
+      type: "AI_READING_REQUEST_EXTENSION_PROGRESS",
+      participantId: SESSION.participantId
+    };
+
+    window.postMessage(message, "*");
+
+    setTimeout(() => {
+      if (SESSION) window.postMessage(message, "*");
+    }, 300);
+
+    setTimeout(() => {
+      if (SESSION) window.postMessage(message, "*");
+    }, 800);
+
+    setTimeout(() => {
+      if (SESSION) window.postMessage(message, "*");
+    }, 1500);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -1019,19 +1066,117 @@ function getFriendlyModeLabel(mode) {
   return "Reading Support";
 }
 
-function openSusNasaModal(taskIndex) {
-  document.getElementById("sus-nasa-modal")?.remove();
+  function openSusNasaModal(taskIndex) {
+    document.getElementById("sus-nasa-modal")?.remove();
 
-  const article = SESSION.articles[taskIndex];
-  const mode = getModeForTask(taskIndex);
+    const article = SESSION.articles[taskIndex];
+    const mode = getModeForTask(taskIndex);
 
-  const modeLabel = getReadableMode(mode); // pentru salvare/export
-  const friendlyModeLabel = getFriendlyModeLabel(mode); // pentru UI
-  const modeIcon = getModeIcon(mode);
+    const modeLabel = getReadableMode(mode);
+    const friendlyModeLabel = getFriendlyModeLabel(mode);
+    const modeIcon = getModeIcon(mode);
 
-  const overlay = document.createElement("div");
-  overlay.id = "sus-nasa-modal";
-  overlay.style.cssText = `
+    const susQuestions = [
+      {
+        name: "sus_frequent_use",
+        text: "1. I think that I would like to use this reading support mode frequently."
+      },
+      {
+        name: "sus_unnecessarily_complex",
+        text: "2. I found this reading support mode unnecessarily complex."
+      },
+      {
+        name: "sus_easy_to_use",
+        text: "3. I thought this reading support mode was easy to use."
+      },
+      {
+        name: "sus_need_technical_support",
+        text: "4. I think that I would need the support of a technical person to be able to use this reading support mode."
+      },
+      {
+        name: "sus_well_integrated",
+        text: "5. I found the various functions of this reading support mode well integrated."
+      },
+      {
+        name: "sus_inconsistent",
+        text: "6. I thought there was too much inconsistency in this reading support mode."
+      },
+      {
+        name: "sus_quick_to_learn",
+        text: "7. I imagine that most people would learn to use this reading support mode very quickly."
+      },
+      {
+        name: "sus_cumbersome",
+        text: "8. I found this reading support mode very cumbersome to use."
+      },
+      {
+        name: "sus_confident",
+        text: "9. I felt very confident using this reading support mode."
+      },
+      {
+        name: "sus_need_to_learn",
+        text: "10. I needed to learn a lot of things before I could get going with this reading support mode."
+      }
+    ];
+
+    const nasaRatingQuestions = [
+      {
+        name: "nasa_mental_demand",
+        title: "Mental Demand",
+        text: "How mentally demanding was the task?"
+      },
+      {
+        name: "nasa_physical_demand",
+        title: "Physical Demand",
+        text: "How physically demanding was the task?"
+      },
+      {
+        name: "nasa_temporal_demand",
+        title: "Temporal Demand",
+        text: "How hurried or rushed was the pace of the task?"
+      },
+      {
+        name: "nasa_performance",
+        title: "Performance",
+        text: "How successful were you in accomplishing what you were asked to do?"
+      },
+      {
+        name: "nasa_effort",
+        title: "Effort",
+        text: "How hard did you have to work to accomplish your level of performance?"
+      },
+      {
+        name: "nasa_frustration",
+        title: "Frustration",
+        text: "How insecure, discouraged, irritated, stressed, and annoyed were you?"
+      }
+    ];
+
+    const nasaPairQuestions = [
+      ["Mental Demand", "Physical Demand"],
+      ["Temporal Demand", "Performance"],
+      ["Effort", "Frustration"],
+      ["Mental Demand", "Temporal Demand"],
+      ["Effort", "Physical Demand"],
+      ["Performance", "Frustration"],
+      ["Effort", "Mental Demand"],
+      ["Temporal Demand", "Frustration"],
+      ["Physical Demand", "Performance"],
+      ["Mental Demand", "Performance"],
+      ["Temporal Demand", "Effort"],
+      ["Frustration", "Physical Demand"],
+      ["Frustration", "Mental Demand"],
+      ["Physical Demand", "Temporal Demand"],
+      ["Performance", "Effort"]
+    ].map((pair, index) => ({
+      name: `nasa_pair_${index + 1}`,
+      left: pair[0],
+      right: pair[1]
+    }));
+
+    const overlay = document.createElement("div");
+    overlay.id = "sus-nasa-modal";
+    overlay.style.cssText = `
     position: fixed;
     inset: 0;
     background: rgba(15, 23, 42, 0.72);
@@ -1043,10 +1188,10 @@ function openSusNasaModal(taskIndex) {
     padding: 24px;
   `;
 
-  overlay.innerHTML = `
+    overlay.innerHTML = `
     <div style="
       background: #ffffff;
-      width: min(820px, 96vw);
+      width: min(920px, 96vw);
       max-height: 92vh;
       overflow-y: auto;
       border-radius: 22px;
@@ -1094,10 +1239,10 @@ function openSusNasaModal(taskIndex) {
           line-height: 1.6;
           font-size: 15px;
           margin: 0;
-          max-width: 680px;
+          max-width: 760px;
         ">
-          Please answer these short questions about the reading support mode you have just used.
-          Your feedback helps us understand how useful and comfortable this mode felt.
+          Please answer these questions about the reading support mode you have just used.
+          Your feedback helps us understand usability and perceived workload.
         </p>
       </div>
 
@@ -1113,7 +1258,7 @@ function openSusNasaModal(taskIndex) {
           font-size: 14px;
           line-height: 1.55;
         ">
-          <strong>Scale:</strong> choose a number from 1 to 5 for each statement.
+          <strong>SUS scale:</strong> choose a number from 1 to 5 for each statement.
         </div>
 
         <h3 style="
@@ -1121,65 +1266,68 @@ function openSusNasaModal(taskIndex) {
           color: #111827;
           font-size: 18px;
         ">
-          How did this reading mode feel?
+          System Usability Scale
         </h3>
 
-        ${renderLikertQuestion("easy_to_use", "1. I found this reading support mode easy to use.", "Strongly disagree", "Strongly agree")}
-        ${renderLikertQuestion("unnecessarily_complex", "2. I thought this reading support mode was unnecessarily complex.", "Strongly disagree", "Strongly agree")}
-        ${renderLikertQuestion("confident_using", "3. I felt confident using this reading support mode.", "Strongly disagree", "Strongly agree")}
-        ${renderLikertQuestion("needed_help", "4. I needed help in order to use this reading support mode.", "Strongly disagree", "Strongly agree")}
-        ${renderLikertQuestion("well_integrated", "5. I thought the functions of this reading support mode were well integrated.", "Strongly disagree", "Strongly agree")}
-        ${renderLikertQuestion("confusing", "6. I found this reading support mode confusing.", "Strongly disagree", "Strongly agree")}
-        ${renderLikertQuestion("helped_understanding", "7. I think this reading support mode helped me understand the article.", "Strongly disagree", "Strongly agree")}
-        ${renderLikertQuestion("would_use_again", "8. I would like to use this type of reading support again for similar articles.", "Strongly disagree", "Strongly agree")}
-
-        <h3 style="
-          margin: 28px 0 14px;
-          color: #111827;
-          font-size: 18px;
-        ">
-          Task effort
-        </h3>
-
-        ${renderLikertQuestion("mental_demand", "9. How mentally demanding was this task?", "Very low", "Very high")}
-        ${renderLikertQuestion("temporal_demand", "10. How rushed did you feel during this task?", "Very low", "Very high")}
-        ${renderLikertQuestion("effort", "11. How much effort did you need to complete the task?", "Very low", "Very high")}
-        ${renderLikertQuestion("frustration", "12. How frustrated did you feel while using this mode?", "Very low", "Very high")}
-        ${renderLikertQuestion("performance", "13. How successful do you think you were in understanding the article?", "Very low", "Very high")}
-        ${renderLikertQuestion("overall_workload", "14. How demanding was the task overall?", "Very low", "Very high")}
+        ${susQuestions.map(q =>
+      renderLikertQuestion(
+        q.name,
+        q.text,
+        "Strongly disagree",
+        "Strongly agree"
+      )
+    ).join("")}
 
         <div style="
-          margin-top: 24px;
           background: #f8fafc;
           border: 1px solid #e5e7eb;
           border-radius: 16px;
-          padding: 18px;
+          padding: 16px 18px;
+          margin: 30px 0 22px;
+          color: #475569;
+          font-size: 14px;
+          line-height: 1.55;
         ">
-          <label style="
-            display: block;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: #111827;
-          ">
-            Optional comment
-          </label>
-
-          <textarea
-            name="comment"
-            rows="4"
-            style="
-              width: 100%;
-              padding: 13px 14px;
-              border: 1px solid #d1d5db;
-              border-radius: 12px;
-              font-family: 'IBM Plex Sans', Arial, sans-serif;
-              font-size: 15px;
-              resize: vertical;
-              outline: none;
-            "
-            placeholder="You can write anything you noticed about this reading mode..."
-          ></textarea>
+          <strong>Task workload scale:</strong> choose a number from 1 to 20 for each workload dimension.
         </div>
+
+        <h3 style="
+          margin: 0 0 14px;
+          color: #111827;
+          font-size: 18px;
+        ">
+          Task Workload Ratings
+        </h3>
+
+        ${nasaRatingQuestions.map(q =>
+      renderNasaRatingQuestion(q.name, q.title, q.text)
+    ).join("")}
+
+        <div style="
+          background: #f8fafc;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          padding: 16px 18px;
+          margin: 30px 0 22px;
+          color: #475569;
+          font-size: 14px;
+          line-height: 1.55;
+        ">
+          <strong>Workload factor comparison:</strong>
+          for each pair, select the factor that contributed more to your workload during this task.
+        </div>
+
+        <h3 style="
+          margin: 0 0 14px;
+          color: #111827;
+          font-size: 18px;
+        ">
+          Workload Factor Comparison
+        </h3>
+
+        ${nasaPairQuestions.map((q, index) =>
+      renderNasaPairQuestion(q.name, index + 1, q.left, q.right)
+    ).join("")}
 
         <div style="
           display: flex;
@@ -1208,93 +1356,86 @@ function openSusNasaModal(taskIndex) {
     </div>
   `;
 
-  document.body.appendChild(overlay);
+    document.body.appendChild(overlay);
 
-  document.getElementById("sus-nasa-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
+    document.getElementById("sus-nasa-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+      const form = e.currentTarget;
+      const formData = new FormData(form);
 
-    const requiredNames = [
-      "easy_to_use",
-      "unnecessarily_complex",
-      "confident_using",
-      "needed_help",
-      "well_integrated",
-      "confusing",
-      "helped_understanding",
-      "would_use_again",
-      "mental_demand",
-      "temporal_demand",
-      "effort",
-      "frustration",
-      "performance",
-      "overall_workload"
-    ];
+      const requiredNames = [
+        ...susQuestions.map(q => q.name),
+        ...nasaRatingQuestions.map(q => q.name),
+        ...nasaPairQuestions.map(q => q.name)
+      ];
 
-    const responses = {};
+      const responses = {};
 
-    for (const name of requiredNames) {
-      const value = formData.get(name);
+      for (const name of requiredNames) {
+        const value = formData.get(name);
 
-      if (!value) {
-        alert("Please answer all feedback questions before continuing.");
-        return;
+        if (!value) {
+          alert("Please answer all feedback questions before continuing.");
+          return;
+        }
+
+        if (name.startsWith("nasa_pair_")) {
+          responses[name] = String(value);
+        } else {
+          responses[name] = Number(value);
+        }
       }
 
-      responses[name] = Number(value);
-    }
-
-    const payload = {
-      participantId: SESSION.participantId,
-      taskNumber: taskIndex + 1,
-      articleId: String(article.id || taskIndex + 1),
-      articleIndex: taskIndex + 1,
-      mode,
-      modeLabel,
-      responses,
-      comment: String(formData.get("comment") || ""),
-      submittedAt: new Date().toISOString()
-    };
-
-    try {
-      const res = await fetch("/api/save_sus_nasa", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        throw new Error("Could not save feedback responses.");
-      }
-
-      SESSION.susDone[taskIndex] = true;
-      SESSION.opened[taskIndex] = true;
-
-      saveSession();
-
-      window.postMessage({
-        type: "AI_READING_SUS_NASA_SUBMITTED",
+      const payload = {
         participantId: SESSION.participantId,
-        taskIndex: taskIndex + 1
-      }, "*");
+        taskNumber: taskIndex + 1,
+        articleId: String(article.id || taskIndex + 1),
+        articleIndex: taskIndex + 1,
+        mode,
+        modeLabel,
+        responses,
+        comment: "",
+        submittedAt: new Date().toISOString()
+      };
 
-      overlay.remove();
-      renderSession();
+      try {
+        const res = await fetch("/api/save_sus_nasa", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
 
-      setTimeout(() => {
-        requestExtensionProgress();
-      }, 300);
+        if (!res.ok) {
+          throw new Error("Could not save feedback responses.");
+        }
 
-    } catch (err) {
-      console.error(err);
-      alert("Could not save feedback responses. Please try again.");
-    }
-  });
-}
+        SESSION.susDone[taskIndex] = true;
+        SESSION.opened[taskIndex] = true;
+
+        saveSession();
+
+        window.postMessage({
+          type: "AI_READING_SUS_NASA_SUBMITTED",
+          participantId: SESSION.participantId,
+          taskIndex: taskIndex + 1
+        }, "*");
+
+        overlay.remove();
+        renderSession();
+
+        setTimeout(() => {
+          requestExtensionProgress();
+        }, 300);
+
+      } catch (err) {
+        console.error(err);
+        alert("Could not save feedback responses. Please try again.");
+      }
+    });
+  }
 
 function renderLikertQuestion(name, label, leftLabel, rightLabel) {
   return `
@@ -1369,6 +1510,177 @@ function renderLikertQuestion(name, label, leftLabel, rightLabel) {
     </div>
   `;
 }
+
+
+function renderNasaRatingQuestion(name, title, questionText) {
+    return `
+    <div style="
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+    ">
+      <div style="
+        font-weight: 700;
+        font-size: 15.5px;
+        line-height: 1.45;
+        color: #111827;
+        margin-bottom: 6px;
+      ">
+        ${title}
+      </div>
+
+      <div style="
+        color: #475569;
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 18px;
+      ">
+        ${questionText}
+      </div>
+
+      <div style="
+        margin: 4px 4px 8px;
+      ">
+        <div style="
+          display: grid;
+          grid-template-columns: repeat(20, 1fr);
+          align-items: end;
+          height: 34px;
+          border-bottom: 3px solid #111827;
+        ">
+          ${Array.from({ length: 20 }, (_, i) => `
+            <div style="
+              height: ${i === 0 || i === 19 || i === 10 ? "30px" : "22px"};
+              border-left: 3px solid #111827;
+              justify-self: center;
+            "></div>
+          `).join("")}
+        </div>
+
+        <div style="
+          display: flex;
+          justify-content: space-between;
+          margin-top: 6px;
+          font-size: 15px;
+          font-weight: 600;
+          color: #111827;
+        ">
+          <span>Very Low</span>
+          <span>Very High</span>
+        </div>
+      </div>
+
+      <div style="
+        display: grid;
+        grid-template-columns: repeat(20, 1fr);
+        gap: 4px;
+        align-items: center;
+        margin-top: 14px;
+      ">
+        ${Array.from({ length: 20 }, (_, i) => i + 1).map(value => `
+          <label style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #334155;
+            cursor: pointer;
+            padding: 5px 2px;
+            border-radius: 8px;
+          ">
+            <input
+              type="radio"
+              name="${name}"
+              value="${value}"
+              style="
+                width: 15px;
+                height: 15px;
+                cursor: pointer;
+              "
+            >
+            <span>${value}</span>
+          </label>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderNasaPairQuestion(name, number, leftOption, rightOption) {
+  return `
+    <div style="
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+    ">
+      <div style="
+        font-weight: 700;
+        font-size: 15.5px;
+        line-height: 1.45;
+        color: #111827;
+        margin-bottom: 14px;
+      ">
+        ${number}. Which factor contributed more to your workload?
+      </div>
+
+      <div style="
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      ">
+        <label style="
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          border: 1px solid #d1d5db;
+          border-radius: 12px;
+          padding: 13px 14px;
+          cursor: pointer;
+          font-weight: 700;
+          color: #111827;
+          background: #f8fafc;
+        ">
+          <input
+            type="radio"
+            name="${name}"
+            value="${leftOption}"
+            style="width: 17px; height: 17px; cursor: pointer;"
+          >
+          <span>${leftOption}</span>
+        </label>
+
+        <label style="
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          border: 1px solid #d1d5db;
+          border-radius: 12px;
+          padding: 13px 14px;
+          cursor: pointer;
+          font-weight: 700;
+          color: #111827;
+          background: #f8fafc;
+        ">
+          <input
+            type="radio"
+            name="${name}"
+            value="${rightOption}"
+            style="width: 17px; height: 17px; cursor: pointer;"
+          >
+          <span>${rightOption}</span>
+        </label>
+      </div>
+    </div>
+  `;
+  }
 
 </script>
 
