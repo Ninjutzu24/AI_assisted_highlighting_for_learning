@@ -1,5 +1,3 @@
-
-
 const MANUAL_COLORS = [
   { id: "yellow", hex: "#FFD600", label: "Yellow" },
   { id: "green",  hex: "#69F0AE", label: "Green"  },
@@ -14,7 +12,7 @@ const STORAGE_KEY = () => `ai-manual-hl::${window.location.href}`;
 let quizUserAnswers = {};
 let quizSubmitted = false;
 
-const TASK_TIME_LIMIT_SECONDS = 10 *60 ;
+const TASK_TIME_LIMIT_SECONDS = 15 *60 ;
 
 let taskMetrics = null;
 let taskTimerInterval = null;
@@ -215,6 +213,7 @@ function startTaskMetrics(mode) {
     manualHighlightRemoveCount: 0,
     aiHighlightCount: 0,
     interactiveCardsShown: 0,
+    threeMinuteWarningShown: false,
     chatbotQuestionCount: 0
   };
 
@@ -264,6 +263,8 @@ function renderTaskTimer() {
   document.body.appendChild(timer);
 }
 
+
+
 function updateTaskTimer() {
   const timer = document.getElementById("ai-task-timer");
   if (!timer || !taskMetrics) return;
@@ -276,6 +277,11 @@ function updateTaskTimer() {
 
   const min = String(Math.floor(remaining / 60)).padStart(2, "0");
   const sec = String(remaining % 60).padStart(2, "0");
+
+  if (remaining <= 3 * 60 && !taskMetrics.threeMinuteWarningShown) {
+    taskMetrics.threeMinuteWarningShown = true;
+    alert("⚠️ Only 3 minutes left for this article.");
+  }
 
   if (remaining <= 0) {
     taskMetrics.timeLimitReached = true;
@@ -2477,7 +2483,7 @@ function renderQuizPopup(quiz) {
   removeSidePanel();
 
   showTaskCompletedPopup();
-}; 
+};
 
   document.getElementById("submit-quiz-btn").onclick = submitQuiz;
   addQuizLogic();
@@ -2540,7 +2546,7 @@ function submitQuiz() {
     btn.style.opacity = "0.75";
   });
   stopTaskTimer();
-  
+ 
 
 const resultDiv = document.getElementById("quiz-result");
 
@@ -2825,6 +2831,19 @@ async function sendChatMessage() {
 
   const images =
     extractImageContexts();
+  const storageResult =
+  await chrome.storage.local.get("studyState");
+
+const studyState =
+  storageResult.studyState || {};
+
+const articleInfo =
+  getArticleInfoForMetrics(studyState);
+
+const currentMode =
+  Array.isArray(studyState.modeOrder)
+    ? studyState.modeOrder[studyState.currentStep]
+    : taskMetrics?.mode || "chatbot";
 
   try {
 
@@ -2836,11 +2855,15 @@ async function sendChatMessage() {
           headers: {
             "Content-Type": "application/json"
           },
-         body: JSON.stringify({
-            article,
-            question,
-            images
-          })
+        body: JSON.stringify({
+          participantId: studyState.participantId || null,
+          articleId: articleInfo.articleId || null,
+          articleIndex: articleInfo.articleIndex || null,
+          mode: currentMode || "chatbot",
+          article,
+          question,
+          images
+        })
         }
       );
 

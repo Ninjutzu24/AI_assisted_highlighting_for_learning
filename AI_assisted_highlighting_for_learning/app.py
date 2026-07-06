@@ -15,6 +15,7 @@ from utils.chatbot import ask_chatbot
 from export_results import export_results_to_excel
 import json
 import os
+from datetime import datetime, timezone
 
 
 app = Flask(__name__)
@@ -356,7 +357,28 @@ def save_sus_nasa():
         "success": True
     })
 
-    
+
+CHATBOT_LOG_FILE = "chatbot_logs.json"
+
+
+def save_chatbot_log(entry):
+    if os.path.exists(CHATBOT_LOG_FILE):
+        try:
+            with open(CHATBOT_LOG_FILE, "r", encoding="utf-8") as f:
+                logs = json.load(f)
+        except Exception:
+            logs = []
+    else:
+        logs = []
+
+    if not isinstance(logs, list):
+        logs = []
+
+    logs.append(entry)
+
+    with open(CHATBOT_LOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(logs, f, indent=4, ensure_ascii=False)
+
 @app.route("/api/chat", methods=["POST", "OPTIONS"])
 def api_chat():
 
@@ -408,6 +430,26 @@ If the user asks about an image or figure, explain it using the IMAGE AND FIGURE
         enriched_question
     )
 
+    try:
+        save_chatbot_log({
+            "participantId": data.get("participantId"),
+            "articleId": data.get("articleId"),
+            "articleIndex": data.get("articleIndex"),
+            "mode": data.get("mode"),
+            "question": question,
+            "answer": answer,
+            "imagesCount": len(images) if isinstance(images, list) else 0,
+            "submittedAt": datetime.now(timezone.utc).isoformat()
+        })
+
+        try:
+            export_results_to_excel()
+        except Exception as export_error:
+            print("[Excel Export] Error after chatbot log:", export_error)
+
+    except Exception as e:
+        print("[Chatbot Log] Error:", e)
+
     return jsonify({
         "answer": answer
     })
@@ -428,5 +470,3 @@ def participant_articles(participant_id):
 
 if __name__ == "__main__":
     app.run(debug=False, host="127.0.0.1", port=8000)
-
-
