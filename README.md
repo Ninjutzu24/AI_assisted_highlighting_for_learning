@@ -87,6 +87,8 @@ AI_assisted_highlighting_for_learning/
 +-- research_paper/                          Research paper and LaTeX source
 +-- results/                                 Experimental data and statistical analyses
 +-- README.md                                Main repository documentation
-Notes
+
+```
+## Notes
 
 The source code, study materials, research paper, and experimental results are organized into separate folders to make the different components of the project easier to access and review.
