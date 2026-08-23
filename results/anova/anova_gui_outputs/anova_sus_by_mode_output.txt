@@ -1,0 +1,22 @@
+ANOVA_table_for_SUS Score
+=================================================================================
+Effect df SS MS F p
+---------------------------------------------------------------------------------
+Participant 17 5646.412 332.142
+Mode 2 3.009 1.505 0.017 0.9833
+Mode_x_Par 34 3034.491 89.250
+=================================================================================
+Data_file: anova_sus_by_mode.txt
+
+Summary statement:
+The effect of mode on SUS score was not statistically significant (F(2, 34) = 0.017, ns).
+
+Main effect means:
+Grand mean: 81.1574074074074
+Mode means:
+MH=80.83333
+AIM=81.25000
+CHAT=81.38889
+
+Effect size:
+Partial eta squared for Mode: 0.000991

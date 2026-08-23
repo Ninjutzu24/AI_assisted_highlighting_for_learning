@@ -1,0 +1,22 @@
+ANOVA_table_for_Total Task Time Seconds
+=================================================================================
+Effect df SS MS F p
+---------------------------------------------------------------------------------
+Participant 17 1372525.926 80736.819
+Mode 2 145151.259 72575.630 3.514 0.0410
+Mode_x_Par 34 702206.741 20653.139
+=================================================================================
+Data_file: anova_total_task_time_by_mode.txt
+
+Summary statement:
+The effect of mode on total task time seconds was statistically significant (F(2, 34) = 3.514, p < .05).
+
+Main effect means:
+Grand mean: 652.0370370370371
+Mode means:
+MH=704.77778
+AIM=581.55556
+CHAT=669.77778
+
+Effect size:
+Partial eta squared for Mode: 0.171299

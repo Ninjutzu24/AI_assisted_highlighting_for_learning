@@ -1,0 +1,22 @@
+ANOVA_table_for_Weighted NASA Workload
+=================================================================================
+Effect df SS MS F p
+---------------------------------------------------------------------------------
+Participant 17 555.384 32.670
+Mode 2 9.339 4.670 0.718 0.4951
+Mode_x_Par 34 221.180 6.505
+=================================================================================
+Data_file: anova_weighted_nasa_by_mode.txt
+
+Summary statement:
+The effect of mode on weighted NASA workload was not statistically significant (F(2, 34) = 0.718, ns).
+
+Main effect means:
+Grand mean: 10.051666666666668
+Mode means:
+MH=10.62556
+AIM=9.87611
+CHAT=9.65333
+
+Effect size:
+Partial eta squared for Mode: 0.040513

@@ -1,0 +1,22 @@
+ANOVA_table_for_Reading Time Seconds
+=================================================================================
+Effect df SS MS F p
+---------------------------------------------------------------------------------
+Participant 17 1195885.333 70346.196
+Mode 2 162650.778 81325.389 5.333 0.0097
+Mode_x_Par 34 518509.222 15250.271
+=================================================================================
+Data_file: anova_reading_time_by_mode.txt
+
+Summary statement:
+The effect of mode on reading time seconds was statistically significant (F(2, 34) = 5.333, p < .01).
+
+Main effect means:
+Grand mean: 475.1111111111111
+Mode means:
+MH=519.50000
+AIM=397.77778
+CHAT=508.05556
+
+Effect size:
+Partial eta squared for Mode: 0.238785

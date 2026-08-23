@@ -1,0 +1,22 @@
+ANOVA_table_for_Quiz Score
+=================================================================================
+Effect df SS MS F p
+---------------------------------------------------------------------------------
+Participant 17 4483.333 263.725
+Mode 2 311.111 155.556 0.888 0.4208
+Mode_x_Par 34 5955.556 175.163
+=================================================================================
+Data_file: anova_quiz_score_by_mode.txt
+
+Summary statement:
+The effect of mode on quiz score was not statistically significant (F(2, 34) = 0.888, ns).
+
+Main effect means:
+Grand mean: 85.0
+Mode means:
+MH=83.88889
+AIM=82.77778
+CHAT=88.33333
+
+Effect size:
+Partial eta squared for Mode: 0.049645
